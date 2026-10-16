@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    letter-spacing: -0.02em;
+    word-break: keep-all;
+    background-color: #F6F3EC;
+    color: #191816;
+  }
+
+  .font-serif-kr {
+    font-family: 'Noto Serif KR', Georgia, serif;
+    letter-spacing: -0.03em;
+  }
+
+  .font-editorial {
+    font-family: 'Cormorant Garamond', 'Noto Serif KR', Georgia, serif;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F6F3EC;
+}
+::-webkit-scrollbar-thumb {
+  background: #C8C1B4;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9E9689;
+}
