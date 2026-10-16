@@ -17,6 +17,14 @@
   .font-editorial {
     font-family: 'Cormorant Garamond', 'Noto Serif KR', Georgia, serif;
   }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
 ::-webkit-scrollbar {

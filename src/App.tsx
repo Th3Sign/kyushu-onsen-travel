@@ -99,6 +99,7 @@ const REGION_COMPARISON_ROWS = [
 export function App() {
   const [shaderMood, setShaderMood] = useState<OnsenShaderMood>('hinoki-wgsl')
   const [selectedRegionId, setSelectedRegionId] = useState<RegionId>('beppu-yufuin')
+  const [mobileCompareTab, setMobileCompareTab] = useState<RegionId>('beppu-yufuin')
   const [activeDayFilter, setActiveDayFilter] = useState<number | 'all'>('all')
   const [selectedFlightId, setSelectedFlightId] = useState<string>('ke-fuk-morning')
   const [selectedTransportId, setSelectedTransportId] = useState<string>('minivan-rental')
@@ -118,6 +119,7 @@ export function App() {
 
   const handleSelectRegion = (regionId: RegionId) => {
     setSelectedRegionId(regionId)
+    setMobileCompareTab(regionId)
     const region = REGION_PLANS.find((r) => r.id === regionId)
     if (region && region.ryokans.length > 0) {
       setSelectedRyokanId(region.ryokans[0].id)
@@ -165,38 +167,38 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F3EC] text-[#191816] pb-20">
+    <div className="min-h-screen bg-[#F6F3EC] text-[#191816] pb-32 sm:pb-20">
       {/* =================================================================
           COVER — FULL-BLEED CINEMATIC WEBGPU SHADER + EDITORIAL TITLE
          ================================================================= */}
-      <header className="relative min-h-[78vh] flex flex-col justify-between bg-[#111110] text-[#F6F3EC] overflow-hidden">
+      <header className="relative min-h-[70vh] sm:min-h-[78vh] flex flex-col justify-between bg-[#111110] text-[#F6F3EC] overflow-hidden">
         <HeroOnsenShader mood={shaderMood} speedMultiplier={0.9} interactiveTrail={true} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/85 pointer-events-none" />
 
         {/* Top Minimalist Masthead */}
-        <div className="relative z-10 max-w-6xl w-full mx-auto px-6 sm:px-10 pt-8 flex flex-wrap items-center justify-between gap-4 border-b border-white/15 pb-5">
-          <div className="flex items-baseline gap-4">
-            <span className="font-editorial text-xl tracking-[0.2em] uppercase text-white">
+        <div className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-10 pt-6 sm:pt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-white/15 pb-4 sm:pb-5">
+          <div className="flex items-baseline justify-between sm:justify-start gap-4">
+            <span className="font-editorial text-lg sm:text-xl tracking-[0.2em] uppercase text-white">
               KYUSHU ONSEN JOURNAL
             </span>
-            <span className="text-xs tracking-widest uppercase text-white/60 hidden sm:inline">
-              No. 2026 — Winter Issue
+            <span className="text-[11px] sm:text-xs tracking-widest uppercase text-white/60">
+              No. 2026 — Winter
             </span>
           </div>
 
           {/* Subtle WebGPU Atmosphere Switcher */}
-          <div className="flex items-center gap-1 text-xs">
-            <span className="text-white/50 mr-2 hidden md:inline tracking-wider uppercase text-[11px]">
+          <div className="flex items-center gap-1.5 text-xs overflow-x-auto no-scrollbar py-0.5">
+            <span className="text-white/50 mr-1 hidden sm:inline tracking-wider uppercase text-[11px] shrink-0">
               WebGPU Canvas:
             </span>
             {SHADER_MOOD_META.map((m) => (
               <button
                 key={m.id}
                 onClick={() => setShaderMood(m.id)}
-                className={`px-2.5 py-1 transition cursor-pointer ${
+                className={`px-2.5 py-1 transition cursor-pointer text-[11px] sm:text-xs shrink-0 ${
                   shaderMood === m.id
                     ? 'bg-white text-[#191816] font-medium'
-                    : 'text-white/70 hover:text-white bg-white/5'
+                    : 'text-white/70 hover:text-white bg-white/10'
                 }`}
               >
                 {m.label}
@@ -206,52 +208,52 @@ export function App() {
         </div>
 
         {/* Center Editorial Title */}
-        <div className="relative z-10 max-w-6xl w-full mx-auto px-6 sm:px-10 my-auto py-16 pointer-events-none">
-          <p className="text-xs sm:text-sm tracking-[0.22em] uppercase text-[#E2D9C8] mb-5">
+        <div className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-10 my-auto py-10 sm:py-16 pointer-events-none">
+          <p className="text-[11px] sm:text-sm tracking-[0.2em] uppercase text-[#E2D9C8] mb-3 sm:mb-5">
             2026. 12. 21 (MON) — 12. 24 (THU) · 3 NIGHTS 4 DAYS
           </p>
-          <h1 className="font-serif-kr text-3xl sm:text-5xl lg:text-[54px] font-normal leading-[1.24] text-white max-w-3xl">
+          <h1 className="font-serif-kr text-2xl sm:text-4xl lg:text-[52px] font-normal leading-[1.3] text-white max-w-3xl">
             열세 달 아기와 어른 셋이 떠나는
             <br />
             규슈 겨울 온천 여정 노트
           </h1>
-          <p className="mt-6 text-sm sm:text-base text-white/80 max-w-xl leading-relaxed font-light">
+          <p className="mt-4 sm:mt-6 text-xs sm:text-base text-white/80 max-w-xl leading-relaxed font-light">
             크리스마스 인파가 몰리기 직전인 12월 셋째 주 평일. 짧은 비행과 자극 없는 온천수,
             침대 낙상 걱정 없는 넓은 화양실과 아기 낮잠 시간을 배려한 3박 4일간의 기록과 설계.
           </p>
         </div>
 
         {/* Bottom Architectural Metadata Strip */}
-        <div className="relative z-10 border-t border-white/15 bg-black/45 backdrop-blur-md">
-          <div className="max-w-6xl mx-auto px-6 sm:px-10 grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-white/15">
-            <div className="py-4 lg:pr-6">
-              <div className="text-[11px] tracking-[0.15em] uppercase text-white/55">Date</div>
-              <div className="text-sm sm:text-base font-medium text-white mt-1">
-                2026. 12. 21 (월) – 12. 24 (목)
+        <div className="relative z-10 border-t border-white/15 bg-black/50 backdrop-blur-md">
+          <div className="max-w-6xl mx-auto px-4 sm:px-10 grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-white/15">
+            <div className="py-3 sm:py-4 pr-3 sm:pr-6">
+              <div className="text-[10px] sm:text-[11px] tracking-[0.15em] uppercase text-white/55">Date</div>
+              <div className="text-xs sm:text-base font-medium text-white mt-0.5">
+                2026. 12. 21 (월) – 24 (목)
               </div>
             </div>
-            <div className="py-4 lg:px-6 pl-4">
-              <div className="text-[11px] tracking-[0.15em] uppercase text-white/55">Guests</div>
-              <div className="text-sm sm:text-base font-medium text-white mt-1">
-                성인 3인 · 13개월 유아 1인
+            <div className="py-3 sm:py-4 pl-3 sm:px-6">
+              <div className="text-[10px] sm:text-[11px] tracking-[0.15em] uppercase text-white/55">Guests</div>
+              <div className="text-xs sm:text-base font-medium text-white mt-0.5">
+                성인 3인 · 13개월 1인
               </div>
             </div>
-            <div className="py-4 lg:px-6">
-              <div className="text-[11px] tracking-[0.15em] uppercase text-white/55">
-                Selected Destination
+            <div className="py-3 sm:py-4 pr-3 sm:px-6">
+              <div className="text-[10px] sm:text-[11px] tracking-[0.15em] uppercase text-white/55">
+                Destination
               </div>
-              <div className="text-sm sm:text-base font-medium text-[#E5C89B] mt-1">
+              <div className="text-xs sm:text-base font-medium text-[#E5C89B] mt-0.5 truncate">
                 {currentRegion.name}
               </div>
             </div>
-            <div className="py-4 lg:pl-6 pl-4">
-              <div className="text-[11px] tracking-[0.15em] uppercase text-white/55">
+            <div className="py-3 sm:py-4 pl-3 sm:pl-6">
+              <div className="text-[10px] sm:text-[11px] tracking-[0.15em] uppercase text-white/55">
                 Estimated Total
               </div>
-              <div className="text-sm sm:text-base font-medium text-white mt-1 tabular-nums">
+              <div className="text-xs sm:text-base font-medium text-white mt-0.5 tabular-nums">
                 {totalBudgetKRW.toLocaleString()}원{' '}
-                <span className="text-xs text-white/60">
-                  (성인 1인 {(perAdultKRW / 10000).toFixed(0)}만 원)
+                <span className="text-[11px] text-white/60 block sm:inline">
+                  (1인 약 {Math.round(perAdultKRW / 10000)}만)
                 </span>
               </div>
             </div>
@@ -263,41 +265,60 @@ export function App() {
           STICKY ARCHITECTURAL INDEX & REGION SWITCHER BAR
          ================================================================= */}
       <nav className="sticky top-0 z-40 bg-[#F6F3EC]/95 backdrop-blur-md border-b border-[#D8D1C5]">
-        <div className="max-w-6xl mx-auto px-6 sm:px-10 flex flex-wrap items-center justify-between gap-4">
-          {/* Left: Region Switcher Tabs */}
-          <div className="flex items-center gap-6 overflow-x-auto">
-            {REGION_PLANS.map((r, i) => {
-              const active = r.id === selectedRegionId
-              return (
-                <button
-                  key={r.id}
-                  onClick={() => handleSelectRegion(r.id)}
-                  className={`py-4 text-left border-b-2 transition cursor-pointer whitespace-nowrap flex items-baseline gap-2 ${
-                    active
-                      ? 'border-[#191816] text-[#191816] font-semibold'
-                      : 'border-transparent text-[#78736A] hover:text-[#191816]'
-                  }`}
-                >
-                  <span className="font-editorial italic text-base">0{i + 1}.</span>
-                  <span className="text-sm sm:text-[15px]">{r.name}</span>
-                </button>
-              )
-            })}
+        <div className="max-w-6xl mx-auto px-4 sm:px-10">
+          <div className="flex items-center justify-between gap-4">
+            {/* Left: Region Switcher Tabs */}
+            <div className="flex items-center gap-3 sm:gap-6 overflow-x-auto no-scrollbar py-1">
+              {REGION_PLANS.map((r, i) => {
+                const active = r.id === selectedRegionId
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => handleSelectRegion(r.id)}
+                    className={`py-3 sm:py-4 text-left border-b-2 transition cursor-pointer whitespace-nowrap flex items-baseline gap-1.5 sm:gap-2 ${
+                      active
+                        ? 'border-[#191816] text-[#191816] font-semibold'
+                        : 'border-transparent text-[#78736A] hover:text-[#191816]'
+                    }`}
+                  >
+                    <span className="font-editorial italic text-sm sm:text-base">0{i + 1}.</span>
+                    <span className="text-xs sm:text-[15px]">{r.name}</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Right: Desktop Section Anchors */}
+            <div className="hidden md:flex items-center gap-6 text-xs tracking-wider uppercase text-[#5C5852] font-medium shrink-0">
+              <a href="#chapter-curation" className="hover:text-[#191816] transition">
+                01 지역 비교
+              </a>
+              <a href="#chapter-timeline" className="hover:text-[#191816] transition">
+                02 여정 타임라인
+              </a>
+              <a href="#chapter-concierge" className="hover:text-[#191816] transition">
+                03 항공·차량·숙소
+              </a>
+              <a href="#chapter-folio" className="hover:text-[#191816] transition">
+                04 견적·체크리스트
+              </a>
+            </div>
           </div>
 
-          {/* Right: Section Anchors */}
-          <div className="hidden md:flex items-center gap-6 text-xs tracking-wider uppercase text-[#5C5852] font-medium">
-            <a href="#chapter-curation" className="hover:text-[#191816] transition">
-              01 지역 비교
+          {/* Mobile Quick Jump Anchors Bar */}
+          <div className="flex md:hidden items-center gap-2 overflow-x-auto no-scrollbar py-2 border-t border-[#E8E2D5] text-[11px] font-medium text-[#78736A]">
+            <span className="text-[10px] text-[#A69F91] uppercase tracking-wider shrink-0">바로가기:</span>
+            <a href="#chapter-curation" className="px-2 py-0.5 bg-[#EBE6DC] text-[#191816] shrink-0">
+              01 지역비교
             </a>
-            <a href="#chapter-timeline" className="hover:text-[#191816] transition">
-              02 여정 타임라인
+            <a href="#chapter-timeline" className="px-2 py-0.5 bg-[#EBE6DC] text-[#191816] shrink-0">
+              02 일정표
             </a>
-            <a href="#chapter-concierge" className="hover:text-[#191816] transition">
-              03 항공·차량·숙소
+            <a href="#chapter-concierge" className="px-2 py-0.5 bg-[#EBE6DC] text-[#191816] shrink-0">
+              03 항공·숙소
             </a>
-            <a href="#chapter-folio" className="hover:text-[#191816] transition">
-              04 견적·체크리스트
+            <a href="#chapter-folio" className="px-2 py-0.5 bg-[#EBE6DC] text-[#191816] shrink-0">
+              04 견적서
             </a>
           </div>
         </div>
@@ -359,15 +380,16 @@ export function App() {
             </div>
           </div>
 
-          {/* Architectural Comparison Table of the 3 Regions */}
+          {/* Architectural Comparison Matrix (Responsive: Table for Desktop / Card Carousel for Mobile) */}
           <div className="space-y-4">
             <div className="flex items-baseline justify-between">
               <span className="text-xs tracking-[0.18em] uppercase text-[#78736A]">
-                Regional Comparison Matrix (원하는 열을 클릭하면 여정이 전환됩니다)
+                Regional Comparison Matrix (3대 후보지 비교)
               </span>
             </div>
 
-            <div className="overflow-x-auto border-y border-[#191816]">
+            {/* Desktop Table View */}
+            <div className="hidden sm:block overflow-x-auto border-y border-[#191816]">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-[#191816] bg-[#EFECE4]">
@@ -454,17 +476,92 @@ export function App() {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile-Only Friendly Segmented Comparison View */}
+            <div className="block sm:hidden space-y-3">
+              <div className="grid grid-cols-3 gap-1 bg-[#E8E2D5] p-1 border border-[#D8D1C5]">
+                {REGION_PLANS.map((r, i) => {
+                  const isTabActive = mobileCompareTab === r.id
+                  return (
+                    <button
+                      key={r.id}
+                      onClick={() => setMobileCompareTab(r.id)}
+                      className={`py-2 px-1 text-center transition cursor-pointer text-xs ${
+                        isTabActive
+                          ? 'bg-[#191816] text-[#F6F3EC] font-semibold shadow-xs'
+                          : 'text-[#5C5852] hover:bg-[#DDD5C5]'
+                      }`}
+                    >
+                      <div className="font-editorial italic text-[10px]">0{i + 1}</div>
+                      <div className="truncate">{r.name.split(' ')[0]}</div>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {(() => {
+                const targetRegion =
+                  REGION_PLANS.find((r) => r.id === mobileCompareTab) ?? REGION_PLANS[0]
+                const isCurrentActive = selectedRegionId === targetRegion.id
+                return (
+                  <div className="border border-[#191816] bg-[#EFECE4] p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2 border-b border-[#D8D1C5] pb-3">
+                      <div>
+                        <div className="font-editorial italic text-xs text-[#8C5A3C]">
+                          {targetRegion.badge}
+                        </div>
+                        <h4 className="font-serif-kr text-base font-semibold text-[#191816]">
+                          {targetRegion.name}
+                        </h4>
+                        <p className="text-xs text-[#5C5852] mt-0.5">{targetRegion.subtitle}</p>
+                      </div>
+                      {isCurrentActive ? (
+                        <span className="text-[11px] px-2 py-0.5 bg-[#191816] text-[#E5C89B] font-medium shrink-0">
+                          선택됨 ●
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleSelectRegion(targetRegion.id)}
+                          className="text-[11px] px-2.5 py-1 bg-[#8C5A3C] text-white font-medium shrink-0 hover:bg-[#6e442c] transition"
+                        >
+                          이 여정 선택 →
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="space-y-3 text-xs leading-relaxed divide-y divide-[#DFD9CE]">
+                      {REGION_COMPARISON_ROWS.map((row, idx) => {
+                        const val =
+                          targetRegion.id === 'beppu-yufuin'
+                            ? row.beppu
+                            : targetRegion.id === 'ureshino-takeo'
+                            ? row.ureshino
+                            : row.yufuin
+                        return (
+                          <div key={idx} className={idx > 0 ? 'pt-2.5' : ''}>
+                            <span className="font-semibold text-[#78736A] block mb-0.5">
+                              {row.criterion}
+                            </span>
+                            <span className="text-[#191816] font-medium">{val}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
           </div>
         </section>
 
         {/* ---------------------------------------------------------------
             CHAPTER 02 — ARCHITECTURAL SPLIT-COLUMN TIMELINE (DAY 01 – 04)
            --------------------------------------------------------------- */}
-        <section id="chapter-timeline" className="py-16 sm:py-20 scroll-mt-14">
-          <div className="grid lg:grid-cols-12 gap-12 items-start">
+        <section id="chapter-timeline" className="py-12 sm:py-20 scroll-mt-14 space-y-8">
+          <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             {/* Left Sticky Column: Day Filter & Route Sequence */}
-            <aside className="lg:col-span-4 lg:sticky lg:top-20 space-y-8">
-              <div className="space-y-3">
+            <aside className="lg:col-span-4 lg:sticky lg:top-20 space-y-6 sm:space-y-8">
+              <div className="space-y-2 sm:space-y-3">
                 <div className="text-xs tracking-[0.2em] uppercase text-[#8C5A3C] font-semibold">
                   Chapter 02 — Chronological Itinerary
                 </div>
@@ -473,13 +570,63 @@ export function App() {
                   <br />
                   여정 타임라인
                 </h2>
-                <p className="text-sm text-[#5C5852] leading-relaxed">
+                <p className="text-xs sm:text-sm text-[#5C5852] leading-relaxed">
                   13개월 아기의 오전·오후 낮잠 리듬과 성인 3인의 교대 휴식 시간을 맞춘 시간표입니다.
                 </p>
               </div>
 
-              {/* Day Filter Buttons */}
-              <div className="border-y border-[#191816] divide-y divide-[#DFD9CE]">
+              {/* Mobile Horizontal Day Filter Pills (Mobile Only) */}
+              <div className="flex lg:hidden items-center gap-2 overflow-x-auto no-scrollbar py-1">
+                <button
+                  onClick={() => setActiveDayFilter('all')}
+                  className={`px-3.5 py-2 text-xs transition cursor-pointer whitespace-nowrap shrink-0 ${
+                    activeDayFilter === 'all'
+                      ? 'bg-[#191816] text-[#F6F3EC] font-semibold'
+                      : 'bg-[#EFECE4] text-[#78736A] hover:text-[#191816] border border-[#DFD9CE]'
+                  }`}
+                >
+                  전체 일정 (Day 1–4)
+                </button>
+                {currentRegion.days.map((d) => (
+                  <button
+                    key={d.day}
+                    onClick={() => setActiveDayFilter(d.day)}
+                    className={`px-3.5 py-2 text-xs transition cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+                      activeDayFilter === d.day
+                        ? 'bg-[#191816] text-[#F6F3EC] font-semibold'
+                        : 'bg-[#EFECE4] text-[#78736A] hover:text-[#191816] border border-[#DFD9CE]'
+                    }`}
+                  >
+                    <span>Day 0{d.day}</span>
+                    <span className="text-[10px] text-[#8C5A3C]">({d.date.split(' ')[0]})</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Mobile Route Sequence Collapsible Accordion (Mobile Only) */}
+              <details className="block lg:hidden bg-[#EFECE4] border border-[#DFD9CE] p-3 group">
+                <summary className="flex items-center justify-between cursor-pointer text-xs font-semibold uppercase tracking-wider text-[#5C5852]">
+                  <span>📍 {currentRegion.name.split(' ')[0]} 주요 이동 순서 (Step 01–05)</span>
+                  <span className="text-[#8C5A3C] text-[11px] group-open:hidden">펼쳐보기 ↓</span>
+                  <span className="text-[#8C5A3C] text-[11px] hidden group-open:inline">접기 ↑</span>
+                </summary>
+                <div className="pt-3 mt-2 border-t border-[#D8D1C5] relative pl-5 border-l border-[#ABA396] space-y-3.5">
+                  {currentRegion.routeNodes.map((node) => (
+                    <div key={node.step} className="relative text-xs">
+                      <span className="absolute -left-[24px] top-1.5 w-2 h-2 rounded-full bg-[#191816]" />
+                      <div className="font-editorial italic text-[#8C5A3C]">Step 0{node.step}</div>
+                      <div className="font-semibold text-[#191816]">{node.place}</div>
+                      <div className="text-[11px] text-[#5C5852]">{node.stayOrStop}</div>
+                      {node.durationToNext && (
+                        <div className="text-[11px] text-[#8C5A3C] font-medium">↓ {node.durationToNext}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </details>
+
+              {/* Desktop Day Filter Buttons (Desktop Only) */}
+              <div className="hidden lg:block border-y border-[#191816] divide-y divide-[#DFD9CE]">
                 <button
                   onClick={() => setActiveDayFilter('all')}
                   className={`w-full py-3 px-2 text-left flex items-center justify-between text-sm transition cursor-pointer ${
@@ -510,8 +657,8 @@ export function App() {
                 ))}
               </div>
 
-              {/* Minimalist Route Flow Summary */}
-              <div className="p-6 bg-[#EFECE4] border border-[#DFD9CE] space-y-4">
+              {/* Desktop Minimalist Route Flow Summary (Desktop Only) */}
+              <div className="hidden lg:block p-6 bg-[#EFECE4] border border-[#DFD9CE] space-y-4">
                 <div className="text-xs tracking-[0.15em] uppercase text-[#5C5852] font-semibold">
                   Route Sequence · {currentRegion.name}
                 </div>
@@ -536,23 +683,23 @@ export function App() {
             </aside>
 
             {/* Right Column: Editorial Timeline Track */}
-            <div className="lg:col-span-8 space-y-16">
+            <div className="lg:col-span-8 space-y-12 sm:space-y-16">
               {currentRegion.days
                 .filter((d) => activeDayFilter === 'all' || d.day === activeDayFilter)
                 .map((dayPlan) => (
-                  <div key={dayPlan.day} className="space-y-8">
+                  <div key={dayPlan.day} className="space-y-6 sm:space-y-8">
                     {/* Day Editorial Header */}
-                    <div className="border-b-2 border-[#191816] pb-5 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    <div className="border-b-2 border-[#191816] pb-4 sm:pb-5 flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
                       <div>
                         <div className="flex items-baseline gap-3">
-                          <span className="font-editorial text-4xl sm:text-5xl font-normal text-[#191816]">
+                          <span className="font-editorial text-3xl sm:text-5xl font-normal text-[#191816]">
                             Day 0{dayPlan.day}
                           </span>
-                          <span className="text-sm tracking-widest uppercase text-[#8C5A3C] font-medium">
+                          <span className="text-xs sm:text-sm tracking-widest uppercase text-[#8C5A3C] font-medium">
                             {dayPlan.date}
                           </span>
                         </div>
-                        <h3 className="font-serif-kr text-xl sm:text-2xl font-normal text-[#191816] mt-2">
+                        <h3 className="font-serif-kr text-lg sm:text-2xl font-normal text-[#191816] mt-1 sm:mt-2">
                           {dayPlan.theme}
                         </h3>
                       </div>
@@ -565,18 +712,18 @@ export function App() {
                     </div>
 
                     {/* Vertical Hairline Timeline */}
-                    <div className="relative pl-6 sm:pl-8 border-l border-[#C8C1B4] space-y-12">
+                    <div className="relative pl-5 sm:pl-8 border-l border-[#C8C1B4] space-y-10 sm:space-y-12">
                       {dayPlan.items.map((item, idx) => {
                         const isLast = idx === dayPlan.items.length - 1
                         return (
-                          <article key={idx} className="relative space-y-3">
+                          <article key={idx} className="relative space-y-2.5 sm:space-y-3">
                             {/* Architectural Dot on Timeline Line */}
-                            <span className="absolute -left-[29px] sm:-left-[37px] top-1.5 w-2.5 h-2.5 rounded-full bg-[#191816] ring-4 ring-[#F6F3EC]" />
+                            <span className="absolute -left-[25.5px] sm:-left-[37px] top-1.5 w-2.5 h-2.5 rounded-full bg-[#191816] ring-4 ring-[#F6F3EC]" />
 
                             {/* Time & Metadata Line */}
-                            <div className="flex flex-wrap items-baseline justify-between gap-2">
-                              <div className="flex flex-wrap items-baseline gap-3">
-                                <span className="font-mono text-sm font-semibold tracking-tight text-[#8C5A3C]">
+                            <div className="flex flex-wrap items-baseline justify-between gap-1.5">
+                              <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
+                                <span className="font-mono text-xs sm:text-sm font-semibold tracking-tight text-[#8C5A3C]">
                                   {item.time}
                                 </span>
                                 <span className="text-xs text-[#78736A]">·</span>
@@ -585,7 +732,7 @@ export function App() {
                                 </span>
                               </div>
 
-                              <div className="flex items-center gap-3 text-xs text-[#5C5852]">
+                              <div className="flex items-center gap-2 text-[11px] sm:text-xs text-[#5C5852]">
                                 <span>유모차: {item.strollerFriendly}</span>
                                 {item.costKRW && (
                                   <>
@@ -597,17 +744,17 @@ export function App() {
                             </div>
 
                             {/* Main Activity Title & Copy */}
-                            <h4 className="font-serif-kr text-lg sm:text-xl font-medium text-[#191816]">
+                            <h4 className="font-serif-kr text-base sm:text-xl font-medium text-[#191816]">
                               {item.title}
                             </h4>
-                            <p className="text-[15px] text-[#33312E] leading-[1.75]">
+                            <p className="text-sm sm:text-[15px] text-[#33312E] leading-[1.75]">
                               {item.desc}
                             </p>
 
                             {/* Two-Column Hairline Footnote for Baby & Adult Tips */}
-                            <div className="grid sm:grid-cols-2 gap-6 pt-3 mt-3 border-t border-[#E2DDD5] text-xs sm:text-[13px] leading-relaxed">
+                            <div className="grid sm:grid-cols-2 gap-3 sm:gap-6 pt-3 mt-3 border-t border-[#E2DDD5] text-xs leading-relaxed bg-[#F3EFE7]/80 p-3 sm:p-0 sm:bg-transparent">
                               <div>
-                                <div className="text-[11px] tracking-[0.14em] uppercase text-[#8C5A3C] font-semibold mb-1">
+                                <div className="text-[10px] sm:text-[11px] tracking-[0.14em] uppercase text-[#8C5A3C] font-semibold mb-1">
                                   Infant Care Note (13개월 아기)
                                 </div>
                                 <p className="text-[#4A4742]">{item.babyTip}</p>
@@ -615,7 +762,7 @@ export function App() {
 
                               {item.adultTip && (
                                 <div>
-                                  <div className="text-[11px] tracking-[0.14em] uppercase text-[#3D4F42] font-semibold mb-1">
+                                  <div className="text-[10px] sm:text-[11px] tracking-[0.14em] uppercase text-[#3D4F42] font-semibold mb-1">
                                     3 Adults Rotation (어른 3인 분담)
                                   </div>
                                   <p className="text-[#4A4742]">{item.adultTip}</p>
@@ -625,7 +772,7 @@ export function App() {
 
                             {/* Subtle Transit Note Between Items */}
                             {!isLast && dayPlan.items[idx + 1]?.transport && (
-                              <div className="pt-4 text-xs text-[#78736A] italic">
+                              <div className="pt-2 sm:pt-4 text-xs text-[#78736A] italic">
                                 ↓ 다음 구간 이동: {dayPlan.items[idx + 1].transport}
                               </div>
                             )}
@@ -655,18 +802,19 @@ export function App() {
             </p>
           </div>
 
-          {/* 03-A. Clean Tabular Flight Timetable */}
+          {/* 03-A. Tabular Flight Timetable (Desktop) & Cards (Mobile) */}
           <div className="space-y-4">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className="font-serif-kr text-lg font-medium text-[#191816]">
+              <h3 className="font-serif-kr text-base sm:text-lg font-medium text-[#191816]">
                 A. 12월 21일(월) 출국 – 12월 24일(목) 귀국 직항 항공편 비교
               </h3>
               <span className="text-xs text-[#5C5852]">
-                * 생후 13개월 유아는 만 2세 미만 무좌석(성인 운임의 10%) 및 유모차 무료 위탁 적용
+                * 13개월 유아는 만 2세 미만 무좌석(10%) 및 유모차 무료 위탁
               </span>
             </div>
 
-            <div className="overflow-x-auto border-y border-[#191816]">
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto border-y border-[#191816]">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-[#191816] bg-[#EFECE4] text-xs uppercase tracking-wider text-[#5C5852]">
@@ -724,6 +872,71 @@ export function App() {
                   })}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Flight Selection Cards */}
+            <div className="block sm:hidden space-y-3">
+              {FLIGHT_OPTIONS.map((f) => {
+                const active = f.id === selectedFlightId
+                return (
+                  <div
+                    key={f.id}
+                    onClick={() => setSelectedFlightId(f.id)}
+                    className={`p-4 border transition cursor-pointer space-y-3 ${
+                      active
+                        ? 'border-[#191816] bg-[#E8E2D5]'
+                        : 'border-[#D8D1C5] bg-[#FAF8F4]'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-editorial text-base text-[#8C5A3C]">
+                            {active ? '●' : '○'}
+                          </span>
+                          <span className="font-semibold text-sm text-[#191816]">
+                            {f.airline}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-[#5C5852] mt-0.5">
+                          {f.routeCode} · {f.routeName} ({f.duration})
+                        </div>
+                      </div>
+                      <span className="text-[10px] tracking-wider uppercase px-2 py-0.5 bg-[#191816]/10 text-[#191816] font-medium shrink-0">
+                        {f.airlineType.split(' ')[0]}
+                      </span>
+                    </div>
+
+                    <div className="bg-[#FAF8F4]/80 p-2.5 border border-[#E2DDD5] space-y-1 text-xs tabular-nums">
+                      <div className="flex justify-between">
+                        <span className="text-[#78736A]">출국 ({f.outboundFlight})</span>
+                        <span className="font-medium text-[#191816]">{f.outboundTime}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#78736A]">귀국 ({f.inboundFlight})</span>
+                        <span className="font-medium text-[#191816]">{f.inboundTime.split(' (')[0]}</span>
+                      </div>
+                    </div>
+
+                    <div className="text-[11px] text-[#4A4742] space-y-0.5">
+                      <div className="font-medium text-[#191816]">수하물: {f.baggageRule}</div>
+                      <div className="text-[#5C5852]">{f.pros}</div>
+                    </div>
+
+                    <div className="pt-2 border-t border-[#DFD9CE] flex items-baseline justify-between">
+                      <span className="text-[11px] text-[#78736A]">4인 왕복 합계 (성인3+유아1)</span>
+                      <div className="text-right">
+                        <div className="text-base font-semibold text-[#191816] tabular-nums">
+                          {f.total3Adults1InfantKRW.toLocaleString()}원
+                        </div>
+                        <div className="text-[10px] text-[#78736A]">
+                          1인 약 {Math.round(f.total3Adults1InfantKRW / 30000)}만 원
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
 
@@ -935,12 +1148,12 @@ export function App() {
                         <div className="text-[10px] tracking-wider uppercase text-[#78736A]">
                           실시간 최저가 조회 바로가기 (구글 경유 아고다 시크릿가 적용)
                         </div>
-                        <div className="flex flex-wrap gap-1.5 text-[11px]">
+                        <div className="grid grid-cols-2 gap-1.5 text-[11px]">
                           <a
                             href={googleHotelsUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-2 py-1 border border-[#191816] bg-[#191816] text-[#F6F3EC] hover:bg-[#33312E] transition"
+                            className="col-span-2 py-2 px-2 text-center border border-[#191816] bg-[#191816] text-[#F6F3EC] hover:bg-[#33312E] transition font-medium"
                           >
                             Google 호텔 최저가 비교 ↗
                           </a>
@@ -948,7 +1161,7 @@ export function App() {
                             href={agodaSearchUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-2 py-1 border border-[#C8C1B4] bg-[#FAF8F4] text-[#191816] hover:border-[#191816] transition"
+                            className="py-1.5 px-2 text-center border border-[#C8C1B4] bg-[#FAF8F4] text-[#191816] hover:border-[#191816] transition"
                           >
                             Agoda ↗
                           </a>
@@ -956,7 +1169,7 @@ export function App() {
                             href={tripComSearchUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-2 py-1 border border-[#C8C1B4] bg-[#FAF8F4] text-[#191816] hover:border-[#191816] transition"
+                            className="py-1.5 px-2 text-center border border-[#C8C1B4] bg-[#FAF8F4] text-[#191816] hover:border-[#191816] transition"
                           >
                             Trip.com ↗
                           </a>
@@ -964,9 +1177,9 @@ export function App() {
                             href={rakutenSearchUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-2 py-1 border border-[#C8C1B4] bg-[#FAF8F4] text-[#191816] hover:border-[#191816] transition"
+                            className="col-span-2 py-1.5 px-2 text-center border border-[#C8C1B4] bg-[#FAF8F4] text-[#191816] hover:border-[#191816] transition"
                           >
-                            Rakuten ↗
+                            Rakuten Travel (화양실 최다) ↗
                           </a>
                         </div>
                       </div>
@@ -977,13 +1190,13 @@ export function App() {
             </div>
 
             {/* Editorial Booking Guide: Why Agoda Looks Cheaper & How to Book for 3 Adults + 13m Baby */}
-            <div className="p-6 sm:p-8 bg-[#EFECE4] border-y border-[#191816] space-y-6">
+            <div className="p-5 sm:p-8 bg-[#EFECE4] border-y border-[#191816] space-y-5 sm:space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 border-b border-[#D8D1C5] pb-4">
                 <div>
                   <div className="text-xs tracking-[0.18em] uppercase text-[#8C5A3C] font-semibold">
                     Booking Platform Insider Note
                   </div>
-                  <h4 className="font-serif-kr text-lg font-medium text-[#191816] mt-1">
+                  <h4 className="font-serif-kr text-base sm:text-lg font-medium text-[#191816] mt-1">
                     숙소는 어디서 어떻게 예약해야 가장 저렴할까요? (아고다·트립닷컴·라쿠텐 실전 팁)
                   </h4>
                 </div>
@@ -992,10 +1205,10 @@ export function App() {
                 </span>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-8">
+              <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
                 {OTA_BOOKING_GUIDE.map((tip) => (
-                  <div key={tip.step} className="space-y-2">
-                    <div className="font-editorial italic text-lg text-[#8C5A3C]">
+                  <div key={tip.step} className="space-y-1.5 sm:space-y-2">
+                    <div className="font-editorial italic text-base sm:text-lg text-[#8C5A3C]">
                       Tip {tip.step}.
                     </div>
                     <h5 className="font-serif-kr text-sm sm:text-[15px] font-semibold text-[#191816] leading-snug">
@@ -1012,7 +1225,7 @@ export function App() {
 
           {/* 03-C. Vehicle Selection */}
           <div className="space-y-4">
-            <h3 className="font-serif-kr text-lg font-medium text-[#191816]">
+            <h3 className="font-serif-kr text-base sm:text-lg font-medium text-[#191816]">
               C. 현지 이동 수단 (성인 3인 + 유아 카시트 1석 + 28인치 캐리어 3개 + 유모차 1대 기준)
             </h3>
 
@@ -1023,7 +1236,7 @@ export function App() {
                   <div
                     key={t.id}
                     onClick={() => setSelectedTransportId(t.id)}
-                    className={`p-6 cursor-pointer transition flex flex-col justify-between space-y-4 ${
+                    className={`p-5 sm:p-6 cursor-pointer transition flex flex-col justify-between space-y-4 ${
                       active ? 'bg-[#E8E2D5]' : 'hover:bg-[#EFECE4]/60'
                     }`}
                   >
@@ -1054,15 +1267,15 @@ export function App() {
         {/* ---------------------------------------------------------------
             CHAPTER 04 — FOLIO ESTIMATE & INFANT SAFETY CHECKLIST
            --------------------------------------------------------------- */}
-        <section id="chapter-folio" className="py-16 sm:py-20 scroll-mt-14">
-          <div className="grid lg:grid-cols-12 gap-12 items-start">
+        <section id="chapter-folio" className="py-12 sm:py-20 scroll-mt-14">
+          <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             {/* Left 7 Cols: Quarantine & Onsen Checklist */}
-            <div className="lg:col-span-7 space-y-6">
+            <div className="lg:col-span-7 space-y-5 sm:space-y-6">
               <div className="space-y-2">
                 <div className="text-xs tracking-[0.2em] uppercase text-[#8C5A3C] font-semibold">
                   Chapter 04 — Essential Notes for 13-Month Infant
                 </div>
-                <h2 className="font-serif-kr text-2xl sm:text-3xl font-normal text-[#191816]">
+                <h2 className="font-serif-kr text-xl sm:text-3xl font-normal text-[#191816]">
                   출국 전 필수 점검 사항 (검역 및 온천 수칙)
                 </h2>
               </div>
@@ -1074,30 +1287,30 @@ export function App() {
                     <div
                       key={item.id}
                       onClick={() => toggleCheck(item.id)}
-                      className="py-5 flex items-start gap-4 cursor-pointer group"
+                      className="py-4 sm:py-5 flex items-start gap-3 sm:gap-4 cursor-pointer group active:bg-[#EFECE4]/70"
                     >
-                      <span className="font-mono text-sm mt-0.5 text-[#8C5A3C]">
+                      <span className="font-mono text-base mt-0.5 text-[#8C5A3C] shrink-0">
                         {checked ? '[✓]' : '[ ]'}
                       </span>
-                      <div className="space-y-1.5">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[11px] tracking-wider uppercase text-[#78736A]">
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="text-[10px] sm:text-[11px] tracking-wider uppercase text-[#78736A]">
                             {item.category}
                           </span>
                           {item.critical && (
-                            <span className="text-[11px] tracking-wider uppercase text-[#A64B2A] font-semibold">
+                            <span className="text-[10px] sm:text-[11px] tracking-wider uppercase text-[#A64B2A] font-semibold">
                               · 중요 수칙
                             </span>
                           )}
                         </div>
                         <h3
-                          className={`text-base font-medium ${
+                          className={`text-sm sm:text-base font-medium ${
                             checked ? 'line-through text-[#9E9689]' : 'text-[#191816]'
                           }`}
                         >
                           {item.title}
                         </h3>
-                        <p className="text-sm text-[#4A4742] leading-relaxed">{item.detail}</p>
+                        <p className="text-xs sm:text-sm text-[#4A4742] leading-relaxed">{item.detail}</p>
                       </div>
                     </div>
                   )
@@ -1106,13 +1319,13 @@ export function App() {
             </div>
 
             {/* Right 5 Cols: Bespoke Hotel Folio / Cost Statement */}
-            <div className="lg:col-span-5 bg-[#191816] text-[#F6F3EC] p-8 space-y-6">
+            <div className="lg:col-span-5 bg-[#191816] text-[#F6F3EC] p-5 sm:p-8 space-y-6">
               <div className="border-b border-white/15 pb-4 flex items-baseline justify-between">
                 <div>
                   <div className="text-[11px] tracking-[0.2em] uppercase text-[#E5C89B]">
                     Travel Folio Estimate
                   </div>
-                  <h3 className="font-serif-kr text-xl font-normal text-white mt-1">
+                  <h3 className="font-serif-kr text-lg sm:text-xl font-normal text-white mt-1">
                     3박 4일 여정 예상 명세서
                   </h3>
                 </div>
@@ -1127,27 +1340,27 @@ export function App() {
                 <div className="grid grid-cols-3 gap-1.5 text-[11px]">
                   <button
                     onClick={() => setPricePlan('ota-breakfast')}
-                    className={`py-2 px-2 text-center border transition cursor-pointer ${
+                    className={`py-2 px-1 text-center border transition cursor-pointer ${
                       pricePlan === 'ota-breakfast'
                         ? 'border-[#E5C89B] bg-[#E5C89B] text-[#191816] font-semibold'
                         : 'border-white/20 text-white/70 hover:text-white'
                     }`}
                   >
-                    아고다 조식포함
+                    아고다 조식
                   </button>
                   <button
                     onClick={() => setPricePlan('ota-halfboard')}
-                    className={`py-2 px-2 text-center border transition cursor-pointer ${
+                    className={`py-2 px-1 text-center border transition cursor-pointer ${
                       pricePlan === 'ota-halfboard'
                         ? 'border-[#E5C89B] bg-[#E5C89B] text-[#191816] font-semibold'
                         : 'border-white/20 text-white/70 hover:text-white'
                     }`}
                   >
-                    아고다·라쿠텐 2식
+                    아고다 2식
                   </button>
                   <button
                     onClick={() => setPricePlan('rack-rate')}
-                    className={`py-2 px-2 text-center border transition cursor-pointer ${
+                    className={`py-2 px-1 text-center border transition cursor-pointer ${
                       pricePlan === 'rack-rate'
                         ? 'border-[#E5C89B] bg-[#E5C89B] text-[#191816] font-semibold'
                         : 'border-white/20 text-white/70 hover:text-white'
@@ -1158,14 +1371,14 @@ export function App() {
                 </div>
               </div>
 
-              <div className="space-y-4 text-sm divide-y divide-white/10">
-                <div className="pt-2 flex justify-between items-start gap-4">
+              <div className="space-y-4 text-xs sm:text-sm divide-y divide-white/10">
+                <div className="pt-2 flex justify-between items-start gap-3">
                   <div>
                     <div className="text-white font-medium">01. 항공권 (왕복 4인)</div>
                     <div className="text-xs text-white/60 mt-0.5">
                       {selectedFlight.airline} · {selectedFlight.routeCode}
                     </div>
-                    <div className="text-xs text-white/45">
+                    <div className="text-[11px] text-white/45">
                       성인 {selectedFlight.adultFareKRW.toLocaleString()}원×3 + 유아{' '}
                       {selectedFlight.infantFareKRW.toLocaleString()}원
                     </div>
@@ -1175,24 +1388,24 @@ export function App() {
                   </div>
                 </div>
 
-                <div className="pt-4 flex justify-between items-start gap-4">
+                <div className="pt-4 flex justify-between items-start gap-3">
                   <div>
                     <div className="text-white font-medium">
                       02. 숙박 3박 (
                       {pricePlan === 'ota-breakfast'
-                        ? '아고다·트립닷컴 조식포함'
+                        ? '조식포함'
                         : pricePlan === 'ota-halfboard'
-                        ? '아고다·라쿠텐 조·석식 2식'
-                        : '공식 정가 조·석식 2식'}
+                        ? '조·석식 2식'
+                        : '공식 정가'}
                       )
                     </div>
                     <div className="text-xs text-white/60 mt-0.5">{selectedRyokan.name}</div>
-                    <div className="text-xs text-white/45">
-                      1박 {selectedNightKRW.toLocaleString()}원 × 3박 (성인 3인 1실 합산)
+                    <div className="text-[11px] text-white/45">
+                      1박 {selectedNightKRW.toLocaleString()}원 × 3박 (3인 1실)
                     </div>
                     {savedOnStayKRW > 0 && (
-                      <div className="text-xs text-[#E5C89B] mt-1">
-                        → 공식 정가 대비 3박 총 {savedOnStayKRW.toLocaleString()}원 절감
+                      <div className="text-[11px] text-[#E5C89B] mt-1">
+                        → 정가 대비 3박 {savedOnStayKRW.toLocaleString()}원 절감
                       </div>
                     )}
                   </div>
@@ -1201,7 +1414,7 @@ export function App() {
                   </div>
                 </div>
 
-                <div className="pt-4 flex justify-between items-start gap-4">
+                <div className="pt-4 flex justify-between items-start gap-3">
                   <div>
                     <div className="text-white font-medium">03. 현지 전용 차량 (4일)</div>
                     <div className="text-xs text-white/60 mt-0.5">
@@ -1215,7 +1428,7 @@ export function App() {
 
                 <div className="pt-4 space-y-2">
                   <div className="flex justify-between items-baseline">
-                    <span className="text-white font-medium">04. 현지 식비·입장권·쇼핑 예비비</span>
+                    <span className="text-white font-medium">04. 식비·입장권·쇼핑 예비비</span>
                     <span className="tabular-nums font-medium text-white">
                       {extraFoodAndTicketKRW.toLocaleString()}원
                     </span>
@@ -1234,17 +1447,17 @@ export function App() {
 
               <div className="border-t border-white/25 pt-5 space-y-2">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-xs uppercase tracking-wider text-white/70">
+                  <span className="text-[11px] sm:text-xs uppercase tracking-wider text-white/70">
                     Total Estimate (KRW)
                   </span>
-                  <span className="font-serif-kr text-2xl sm:text-3xl text-[#E5C89B] tabular-nums">
+                  <span className="font-serif-kr text-xl sm:text-3xl text-[#E5C89B] tabular-nums">
                     {totalBudgetKRW.toLocaleString()}원
                   </span>
                 </div>
                 <div className="flex items-baseline justify-between text-xs text-white/65">
-                  <span>성인 1인당 부담액 (÷3인 기준)</span>
+                  <span>성인 1인당 (÷3인)</span>
                   <span className="tabular-nums font-medium text-white">
-                    약 {perAdultKRW.toLocaleString()}원 (총액 약 ¥{totalBudgetJPY.toLocaleString()})
+                    약 {perAdultKRW.toLocaleString()}원
                   </span>
                 </div>
               </div>
@@ -1252,6 +1465,30 @@ export function App() {
           </div>
         </section>
       </main>
+
+      {/* Mobile Floating Bottom Estimate Bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#191816]/95 backdrop-blur-md text-[#F6F3EC] border-t border-white/15 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-2xl flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[11px] text-[#E5C89B] truncate font-medium">
+            {currentRegion.name.split(' (')[0]} · {selectedRyokan.name}
+          </div>
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-serif-kr text-base sm:text-lg font-semibold text-white tabular-nums">
+              {totalBudgetKRW.toLocaleString()}원
+            </span>
+            <span className="text-[10px] sm:text-xs text-white/60">
+              (1인 {Math.round(perAdultKRW / 10000)}만)
+            </span>
+          </div>
+        </div>
+
+        <a
+          href="#chapter-folio"
+          className="px-3.5 py-2 bg-[#E5C89B] text-[#191816] font-semibold text-xs whitespace-nowrap hover:bg-[#d9b882] transition shadow shrink-0"
+        >
+          견적 명세서 ↓
+        </a>
+      </div>
     </div>
   )
 }
