@@ -24,7 +24,6 @@ export interface DbStatus {
   connected: boolean
   provider: string
   message: string
-  hasEnvUrl: boolean
 }
 
 interface AuthContextType {
@@ -32,12 +31,9 @@ interface AuthContextType {
   dbStatus: DbStatus
   isLoading: boolean
   lastSavedAt: string | null
-  customDbUrl: string
-  setCustomDbUrl: (url: string) => void
-  login: (email: string, password?: string) => Promise<{ ok: boolean; error?: string }>
-  register: (email: string, password?: string, name?: string) => Promise<{ ok: boolean; error?: string }>
+  login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>
+  register: (email: string, password: string, name?: string) => Promise<{ ok: boolean; error?: string }>
   logout: () => void
-  quickDemoLogin: () => Promise<void>
   savePlan: (plan: Omit<SavedTravelPlan, 'user_email'>) => Promise<{ ok: boolean; message?: string; error?: string }>
   loadPlan: () => Promise<SavedTravelPlan | null>
   refreshDbStatus: () => Promise<void>
@@ -46,8 +42,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const STORAGE_KEY_USER = 'kyushu_travel_user'
-const STORAGE_KEY_DB_URL = 'kyushu_travel_neon_url'
-const STORAGE_KEY_LOCAL_PLAN = 'kyushu_travel_local_plan'
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(() => {
@@ -59,70 +53,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   })
 
-  const [customDbUrl, setCustomDbUrlState] = useState<string>(() => {
-    return localStorage.getItem(STORAGE_KEY_DB_URL) || ''
-  })
-
   const [dbStatus, setDbStatus] = useState<DbStatus>({
     connected: false,
     provider: 'Neon Serverless Postgres',
     message: 'DB 상태 확인 중...',
-    hasEnvUrl: false,
   })
 
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
 
-  const setCustomDbUrl = (url: string) => {
-    setCustomDbUrlState(url)
-    if (url) {
-      localStorage.setItem(STORAGE_KEY_DB_URL, url)
-    } else {
-      localStorage.removeItem(STORAGE_KEY_DB_URL)
-    }
-  }
-
   // Check Neon DB connection status
   const refreshDbStatus = useCallback(async () => {
     try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (customDbUrl) {
-        headers['x-neon-database-url'] = customDbUrl
-      }
-      const res = await fetch('/api/auth?action=status', { headers })
+      const res = await fetch('/api/auth?action=status')
       if (res.ok) {
         const data = await res.json()
         setDbStatus({
           connected: data.connected,
           provider: data.provider || 'Neon Serverless Postgres',
-          message: data.message || (data.connected ? 'Neon DB 정상 연결됨' : '연결 대기중'),
-          hasEnvUrl: !!data.hasEnvUrl,
+          message: data.connected ? 'Neon DB 정상 연결됨' : (data.error || '연결 대기중'),
+        })
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setDbStatus({
+          connected: false,
+          provider: 'Neon Serverless Postgres',
+          message: data.error || 'DB 연결 실패',
         })
       }
     } catch {
-      setDbStatus((prev) => ({
-        ...prev,
+      setDbStatus({
         connected: false,
-        message: '로컬/오프라인 모드 (게스트 세션 지원)',
-      }))
+        provider: 'Neon Serverless Postgres',
+        message: '서버리스 API 응답 없음',
+      })
     }
-  }, [customDbUrl])
+  }, [])
 
   useEffect(() => {
     refreshDbStatus()
   }, [refreshDbStatus])
 
   // Login handler
-  const login = async (email: string, password = 'demo-password') => {
+  const login = async (email: string, password: string) => {
     setIsLoading(true)
     try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (customDbUrl) headers['x-neon-database-url'] = customDbUrl
-
       const res = await fetch('/api/auth?action=login', {
         method: 'POST',
-        headers,
-        body: JSON.stringify({ email, password, connectionString: customDbUrl || undefined }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       })
 
       const data = await res.json()
@@ -136,26 +115,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false)
       return { ok: false, error: data.error || '로그인에 실패했습니다.' }
     } catch (err: any) {
-      // Fallback local demo login if API is completely unavailable
-      const fallbackUser = { email, name: email.split('@')[0] || '온천가족' }
-      setUser(fallbackUser)
-      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(fallbackUser))
       setIsLoading(false)
-      return { ok: true }
+      return { ok: false, error: '서버 통신 실패: ' + err.message }
     }
   }
 
   // Register handler
-  const register = async (email: string, password = 'demo-password', name?: string) => {
+  const register = async (email: string, password: string, name?: string) => {
     setIsLoading(true)
     try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (customDbUrl) headers['x-neon-database-url'] = customDbUrl
-
       const res = await fetch('/api/auth?action=register', {
         method: 'POST',
-        headers,
-        body: JSON.stringify({ email, password, name, connectionString: customDbUrl || undefined }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name }),
       })
 
       const data = await res.json()
@@ -169,18 +141,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false)
       return { ok: false, error: data.error || '회원가입에 실패했습니다.' }
     } catch (err: any) {
-      const fallbackUser = { email, name: name || email.split('@')[0] || '신규 여행자' }
-      setUser(fallbackUser)
-      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(fallbackUser))
       setIsLoading(false)
-      return { ok: true }
+      return { ok: false, error: '서버 통신 실패: ' + err.message }
     }
-  }
-
-  // Quick Demo Login
-  const quickDemoLogin = async () => {
-    const demoEmail = 'family@kyushu-travel.kr'
-    await login(demoEmail, 'travel2026')
   }
 
   // Logout
@@ -193,46 +156,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Save Travel Plan to Neon DB
   const savePlan = async (plan: Omit<SavedTravelPlan, 'user_email'>) => {
     if (!user) {
-      return { ok: false, error: '로그인 후 저장할 수 있습니다.' }
+      return { ok: false, error: '로그인 후 여행 플랜을 저장할 수 있습니다.' }
     }
 
     setIsLoading(true)
     const payload = {
       ...plan,
       userEmail: user.email,
-      connectionString: customDbUrl || undefined,
     }
 
     try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (customDbUrl) credentialsHeader(headers, customDbUrl)
-
       const res = await fetch('/api/auth?action=save_plan', {
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
       const data = await res.json()
 
-      // Also persist to localStorage as backup
-      localStorage.setItem(STORAGE_KEY_LOCAL_PLAN, JSON.stringify(payload))
-      const timeStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
-      setLastSavedAt(timeStr)
-      setIsLoading(false)
-
-      return {
-        ok: true,
-        message: data.dbConnected
-          ? 'Neon DB에 맞춤 일정이 안전하게 저장되었습니다.'
-          : '로컬 세션에 일정이 임시 저장되었습니다.',
+      if (data.ok) {
+        const timeStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+        setLastSavedAt(timeStr)
+        setIsLoading(false)
+        return {
+          ok: true,
+          message: data.message || 'Neon DB에 맞춤 플랜이 성공적으로 저장되었습니다.',
+        }
       }
-    } catch (err: any) {
-      // Local backup fallback
-      localStorage.setItem(STORAGE_KEY_LOCAL_PLAN, JSON.stringify(payload))
-      const timeStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
-      setLastSavedAt(timeStr)
+
       setIsLoading(false)
-      return { ok: true, message: '오프라인 저장소에 보관되었습니다.' }
+      return { ok: false, error: data.error || '플랜 저장에 실패했습니다.' }
+    } catch (err: any) {
+      setIsLoading(false)
+      return { ok: false, error: '서버 통신 오류: ' + err.message }
     }
   }
 
@@ -241,12 +196,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return null
 
     try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (customDbUrl) headers['x-neon-database-url'] = customDbUrl
-
-      const res = await fetch(`/api/auth?action=get_plan&email=${encodeURIComponent(user.email)}`, {
-        headers,
-      })
+      const res = await fetch(`/api/auth?action=get_plan&email=${encodeURIComponent(user.email)}`)
       if (res.ok) {
         const data = await res.json()
         if (data.plan) {
@@ -267,19 +217,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // ignore
     }
 
-    // Fallback to local storage if DB query returns null
-    try {
-      const local = localStorage.getItem(STORAGE_KEY_LOCAL_PLAN)
-      if (local) return JSON.parse(local)
-    } catch {
-      // ignore
-    }
-
     return null
-  }
-
-  function credentialsHeader(headers: Record<string, string>, url: string) {
-    headers['x-neon-database-url'] = url
   }
 
   return (
@@ -289,12 +227,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         dbStatus,
         isLoading,
         lastSavedAt,
-        customDbUrl,
-        setCustomDbUrl,
         login,
         register,
         logout,
-        quickDemoLogin,
         savePlan,
         loadPlan,
         refreshDbStatus,

@@ -8,26 +8,13 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
-  const {
-    user,
-    dbStatus,
-    isLoading,
-    customDbUrl,
-    setCustomDbUrl,
-    login,
-    register,
-    logout,
-    quickDemoLogin,
-    refreshDbStatus,
-  } = useAuth()
+  const { user, dbStatus, isLoading, login, register, logout } = useAuth()
 
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
-  const [showDbConfig, setShowDbConfig] = useState(false)
-  const [tempDbUrl, setTempDbUrl] = useState(customDbUrl)
 
   if (!isOpen) return null
 
@@ -35,13 +22,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     e.preventDefault()
     setErrorMsg('')
 
-    if (!email) {
-      setErrorMsg('이메일을 입력해주세요.')
+    if (!email.trim() || !password.trim()) {
+      setErrorMsg('이메일과 비밀번호를 모두 입력해주세요.')
       return
     }
 
     if (mode === 'login') {
-      const res = await login(email, password || 'default1234')
+      const res = await login(email.trim(), password)
       if (res.ok) {
         onSuccess?.()
         onClose()
@@ -49,7 +36,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         setErrorMsg(res.error || '로그인에 실패했습니다.')
       }
     } else {
-      const res = await register(email, password || 'default1234', name)
+      const res = await register(email.trim(), password, name.trim())
       if (res.ok) {
         onSuccess?.()
         onClose()
@@ -57,19 +44,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         setErrorMsg(res.error || '회원가입에 실패했습니다.')
       }
     }
-  }
-
-  const handleQuickDemo = async () => {
-    setErrorMsg('')
-    await quickDemoLogin()
-    onSuccess?.()
-    onClose()
-  }
-
-  const handleSaveDbUrl = async () => {
-    setCustomDbUrl(tempDbUrl.trim())
-    await refreshDbStatus()
-    setShowDbConfig(false)
   }
 
   return (
@@ -93,89 +67,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             Member & Cloud Sync · Neon Postgres
           </div>
           <h2 className="font-serif-kr text-xl sm:text-2xl font-normal text-[#191816]">
-            {user ? '회원 정보 및 클라우드 동기화' : mode === 'login' ? '로그인' : '회원가입'}
+            {user ? '회원 정보' : mode === 'login' ? '로그인' : '회원가입'}
           </h2>
           <p className="text-xs text-[#5C5852] leading-relaxed">
             {user
               ? `${user.name} (${user.email}) 님으로 로그인되어 있습니다.`
-              : '나만의 온천 여정(선택한 숙소·교통편·예산)을 Neon DB에 영구 저장하고 언제든 불러올 수 있습니다.'}
+              : '로그인 후 선택한 맞춤 여정(숙소·교통편·예산)을 Neon DB에 안전하게 보관할 수 있습니다.'}
           </p>
-        </div>
-
-        {/* Neon Database Status Badge */}
-        <div className="p-3 bg-[#EFECE4] border border-[#DFD9CE] space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2">
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  dbStatus.connected ? 'bg-emerald-600 animate-pulse' : 'bg-amber-600'
-                }`}
-              />
-              <span className="font-semibold text-[#191816]">Neon Serverless DB</span>
-            </div>
-            <span
-              className={`text-[11px] px-2 py-0.5 font-medium ${
-                dbStatus.connected
-                  ? 'bg-emerald-100 text-emerald-800'
-                  : 'bg-amber-100 text-amber-800'
-              }`}
-            >
-              {dbStatus.connected ? '정상 연결됨' : '대기중 (게스트 모드)'}
-            </span>
-          </div>
-          <p className="text-[11px] text-[#78736A] leading-tight">
-            {dbStatus.connected
-              ? 'Vercel / Neon 클라우드 Postgres 테이블(travel_users, travel_saved_plans)과 실시간 연동 중입니다.'
-              : 'DATABASE_URL 미연결 시에도 세션 로컬 스토리지로 저장 및 불러오기가 완벽 지원됩니다.'}
-          </p>
-
-          {/* Optional Direct Neon URL Config Toggle */}
-          <div className="pt-2 border-t border-[#DFD9CE]/60 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => setShowDbConfig(!showDbConfig)}
-              className="text-[11px] text-[#8C5A3C] hover:underline cursor-pointer flex items-center gap-1 font-medium"
-            >
-              <span>{showDbConfig ? '▲ 연결 주소 설정 닫기' : '▼ 내 Neon DB 연결 주소 직접 입력'}</span>
-            </button>
-            {customDbUrl && (
-              <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5">사용자 DB 지정됨</span>
-            )}
-          </div>
-
-          {showDbConfig && (
-            <div className="pt-2 space-y-2 text-xs">
-              <input
-                type="text"
-                placeholder="postgresql://neondb_owner:***@ep-***.neon.tech/neondb?sslmode=require"
-                value={tempDbUrl}
-                onChange={(e) => setTempDbUrl(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-white border border-[#DFD9CE] text-[11px] font-mono text-[#191816] focus:outline-none focus:border-[#191816]"
-              />
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={handleSaveDbUrl}
-                  className="px-3 py-1 bg-[#191816] text-[#F6F3EC] text-[11px] cursor-pointer hover:bg-black font-medium"
-                >
-                  연결 주소 적용
-                </button>
-                {customDbUrl && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTempDbUrl('')
-                      setCustomDbUrl('')
-                      refreshDbStatus()
-                    }}
-                    className="px-2 py-1 text-[11px] text-rose-700 hover:underline cursor-pointer"
-                  >
-                    초기화 (기본값)
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* User is already logged in */}
@@ -234,7 +132,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                   mode === 'register' ? 'bg-[#191816] text-[#F6F3EC]' : 'bg-[#F6F3EC] text-[#5C5852] hover:bg-[#EFECE4]'
                 }`}
               >
-                새 계정 만들기
+                새 계정 회원가입
               </button>
             </div>
 
@@ -246,7 +144,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
             {mode === 'register' && (
               <div className="space-y-1">
-                <label className="text-[11px] font-medium text-[#5C5852]">이름 (또는 닉네임)</label>
+                <label className="text-[11px] font-medium text-[#5C5852]">이름 (또는 가족 닉네임)</label>
                 <input
                   type="text"
                   placeholder="예: 민서네 가족"
@@ -276,6 +174,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 placeholder="비밀번호를 입력하세요"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
                 className="w-full px-3 py-2 bg-white border border-[#DFD9CE] text-xs text-[#191816] focus:outline-none focus:border-[#191816]"
               />
             </div>
@@ -287,27 +186,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               className="w-full py-3 bg-[#191816] text-[#F6F3EC] text-xs sm:text-sm font-medium hover:bg-black transition cursor-pointer disabled:opacity-50"
             >
               {isLoading
-                ? '처리 중...'
+                ? 'Neon DB 통신 중...'
                 : mode === 'login'
                 ? 'Neon DB로 로그인'
-                : 'Neon DB에 계정 등록하고 시작하기'}
+                : 'Neon DB에 계정 등록하기'}
             </button>
-
-            {/* Quick Demo Button */}
-            <div className="pt-2 border-t border-[#DFD9CE] text-center space-y-2">
-              <button
-                type="button"
-                onClick={handleQuickDemo}
-                className="w-full py-2 bg-[#E8E2D5] hover:bg-[#DFD9CE] text-[#191816] text-xs font-medium transition cursor-pointer border border-[#C5BDAF]"
-              >
-                ✨ 체험 계정으로 1초 로그인 (데모)
-              </button>
-              <div className="text-[11px] text-[#78736A]">
-                계정이 없어도 클릭 한 번으로 모든 저장/불러오기 기능을 바로 테스트할 수 있습니다.
-              </div>
-            </div>
           </form>
         )}
+
+        {/* Clean Neon Database Status Indicator */}
+        <div className="pt-3 border-t border-[#DFD9CE] flex items-center justify-between text-[11px] text-[#78736A]">
+          <div className="flex items-center gap-1.5">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                dbStatus.connected ? 'bg-emerald-600 animate-pulse' : 'bg-rose-500'
+              }`}
+            />
+            <span className="font-medium text-[#191816]">Neon Serverless Postgres</span>
+          </div>
+          <span className={dbStatus.connected ? 'text-emerald-700' : 'text-rose-600'}>
+            {dbStatus.connected ? '데이터베이스 정상 연결됨' : '연결 확인 필요'}
+          </span>
+        </div>
       </div>
     </div>
   )

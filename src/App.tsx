@@ -1662,7 +1662,7 @@ export function App() {
                           dbStatus.connected ? 'bg-emerald-400' : 'bg-amber-400'
                         }`}
                       />
-                      <span>{dbStatus.connected ? 'Neon DB 정상 연동' : '게스트 세션'}</span>
+                      <span>{dbStatus.connected ? 'Neon DB 정상 연동' : 'DB 연결 상태 확인'}</span>
                     </span>
                     {lastSavedAt ? (
                       <span className="text-[#E5C89B]">최근 저장: {lastSavedAt}</span>
