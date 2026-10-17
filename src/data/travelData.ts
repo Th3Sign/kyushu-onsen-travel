@@ -1088,3 +1088,459 @@ export const BABY_CHECKLIST: ChecklistItem[] = [
       '유모차는 공항 게이트 앞까지 끌고 가고(Door-to-Door 태그 부착), 기내 탑승 및 료칸 정원 이동을 위해 가벼운 아기띠/힙시트를 함께 챙기면 어른 3명이 번갈아 안아주기에 최고입니다.',
   },
 ]
+
+export interface DynamicRouteWaypoint {
+  step: number
+  title: string
+  place: string
+  action: string
+  duration: string
+  highwayOrLine: string
+  babyPoint: string
+  adultPoint: string
+  luggageStatus: string
+}
+
+export interface DynamicTransportRoute {
+  transportId: string
+  transportName: string
+  modeBadge: string
+  routeTheme: string
+  totalMinutesOneWay: number
+  tollOrFareNote: string
+  scenicHighlight: string
+  babyComfortScore: number
+  waypoints: DynamicRouteWaypoint[]
+}
+
+export const DYNAMIC_ROUTES: Record<string, DynamicTransportRoute> = {
+  // ==========================================
+  // BEPPU & YUFUIN
+  // ==========================================
+  'beppu-yufuin:minivan-rental': {
+    transportId: 'minivan-rental',
+    transportName: '8인승 프리미엄 미니밴 렌터카 (토요타 노아/알파드)',
+    modeBadge: '🚗 고속도로 IC 직결 & 산간 파노라마 드라이브',
+    routeTheme: '오이타 고속도로(ETC) ➔ 벳푸완 SA(수유실) ➔ 유후다케 하이웨이 직결 코스',
+    totalMinutesOneWay: 95,
+    tollOrFareNote: '고속도로 톨게이트 왕복 약 ¥6,400 (ETC 카드 자동 정산)',
+    scenicHighlight: '유후다케 산간 설경과 벳푸만을 내려다보는 벳푸완 SA 전망대',
+    babyComfortScore: 99,
+    waypoints: [
+      {
+        step: 1,
+        title: '공항 렌터카 픽업 & 카시트 장착',
+        place: '후쿠오카/오이타 공항 렌터카 카운터',
+        action: '공항 셔틀 3분 이동 ➔ ISOFIX 유아 카시트 1석 장착 ➔ 28인치 캐리어 3개 + 유모차 트렁크 적재',
+        duration: '약 25분 소요 (인수 절차)',
+        highwayOrLine: '공항 전용 픽업 존',
+        babyPoint: '렌터카 데스크 바로 옆 수유실에서 출발 전 기저귀 교환 및 보리차 섭취',
+        adultPoint: '성인 3명 중 운전자 면허 등록 및 일본 우핸들/내비게이션 조작 숙지',
+        luggageStatus: '3열 폴딩 상태로 캐리어 3개 + 유모차 넉넉히 수납 (성인 3인 2열 분산 착석)',
+      },
+      {
+        step: 2,
+        title: '오이타 자동차도 고속도로 직결 주행',
+        place: '다자이후 IC ➔ 유후인 IC (오이타 자동차도)',
+        action: 'ETC 톨게이트 논스톱 통과 ➔ 고속도로 크루즈 주행 (규정속도 80~100km/h)',
+        duration: '약 55분 소요',
+        highwayOrLine: '오이타 자동차도 (大分自動車道)',
+        babyPoint: '차량의 부드러운 진동으로 아기 오전 낮잠 유도 (암막 블라인드 전개)',
+        adultPoint: '조수석 성인은 음악/내비 안내, 2열 성인은 아기 수면 상태 모니터링',
+        luggageStatus: '트렁크 안전 고정망 체결로 주행 중 짐 쏠림 방지',
+      },
+      {
+        step: 3,
+        title: '고속도로 SA 휴게소 경유 & 수유 타임',
+        place: '야마다 SA 또는 벳푸완 SA (Beppuwan SA)',
+        action: '오션뷰 전망 휴게소 정차 ➔ 온수기 분유 수유 & 기저귀 교환 ➔ 따뜻한 우동/커피 테이크아웃',
+        duration: '약 25분 휴식',
+        highwayOrLine: 'SA 하이웨이 오아시스',
+        babyPoint: '베이비룸 내 급탕기(70°C 온수), 개별 기저귀 교환대, 전자레인지 완비',
+        adultPoint: '성인 3명 교대로 스트레칭 및 벳푸만 오션뷰 파노라마 감상',
+        luggageStatus: '차량 잠금 후 가벼운 기저귀 가방만 휴대',
+      },
+      {
+        step: 4,
+        title: '야마나미 하이웨이 & 유후인 마을 진입',
+        place: '유후다케 기슭 ➔ 긴린코 호수 공영 주차장',
+        action: '완만한 산간 드라이브 ➔ 호수 바로 앞 평지 유료 주차장 주차 ➔ 유모차 전개',
+        duration: '약 25분 소요',
+        highwayOrLine: '현도 11호선 (야마나미 하이웨이)',
+        babyPoint: '차내에서 따뜻한 아기 겉옷 착용 후 디럭스 유모차로 안락한 평지 산책 시작',
+        adultPoint: '성인 3명이 번갈아 유모차를 밀며 유노츠보 거리 간식 쇼핑',
+        luggageStatus: '호수 산책 중 캐리어 3개는 차량 트렁크에 안전하게 보관',
+      },
+      {
+        step: 5,
+        title: '벳푸 해안도로 ➔ 료칸 전용 주차장 도착',
+        place: '국도 10호선 ➔ 아마네 리조트 세이카이 / 스기노이',
+        action: '바다 전망 해안도로 주행 ➔ 료칸 전용 주차장 도착 (무단차 카트 체크인)',
+        duration: '약 35분 소요',
+        highwayOrLine: '국도 10호선 쇼닝가하마 해변로',
+        babyPoint: '주차장에서 로비까지 단차가 전혀 없어 잠든 아기를 깨우지 않고 이동 가능',
+        adultPoint: '발렛/지상 주차 완료 후 가이세키 석식 시간 확정 및 가족탕 예약',
+        luggageStatus: '직원이 카트로 객실 화양실까지 캐리어 3개 및 짐 전체 원스톱 운반',
+      },
+    ],
+  },
+  'beppu-yufuin:private-jumbo-taxi': {
+    transportId: 'private-jumbo-taxi',
+    transportName: '프라이빗 점보택시 / 전용 밴 투어 (토요타 알파드/하이에이스)',
+    modeBadge: '🚐 공항 입국장 미팅 & 료칸 현관 도어투도어(Door-to-Door) 직결',
+    routeTheme: '운전 피로 제로! 입국장에서 료칸 로비 현관까지 비 한 방울 안 맞고 직행하는 럭셔리 송영',
+    totalMinutesOneWay: 85,
+    tollOrFareNote: '전용 기사님 인건비, 유류비, 고속도로 통행료 전체 포함',
+    scenicHighlight: '성인 3명 모두 운전 부담 없이 차내에서 시원한 삿포로 맥주와 간식 즐기기',
+    babyComfortScore: 98,
+    waypoints: [
+      {
+        step: 1,
+        title: '공항 국제선 입국장 네임피켓 미팅',
+        place: '후쿠오카/오이타 공항 도착 로비 게이트',
+        action: '기사님이 성함 피켓 들고 미팅 ➔ 캐리어 3개와 유모차를 기사님이 직접 수납',
+        duration: '약 10분 소요 (대기 제로)',
+        highwayOrLine: '공항 귀빈/전용차량 승차장',
+        babyPoint: '공항 밖으로 나가지 않고 게이트 바로 앞 대기 차량으로 직행하여 겨울 찬바람 차단',
+        adultPoint: '렌터카 서류 작성이나 길 찾기 스트레스 없이 곧바로 탑승',
+        luggageStatus: '대형 밴 트렁크에 캐리어 3개 + 유모차를 기사님이 안전하게 테트리스 적재',
+      },
+      {
+        step: 2,
+        title: '고속도로 논스톱 리무진 드라이브',
+        place: '도시고속도로 ➔ 오이타 자동차도 직행',
+        action: '전용 기사님의 숙련된 안전 운행 ➔ 13개월 아기 수면을 배려한 부드러운 코너링',
+        duration: '약 60분 논스톱 주행',
+        highwayOrLine: '오이타 고속도로',
+        babyPoint: '사전 요청된 고급 유아 카시트 장착 상태로 쾌적하게 차내 숙면',
+        adultPoint: '성인 3명 전원 스마트폰을 보거나 차내에서 여유롭게 대화',
+        luggageStatus: '트렁크 격벽 분리로 실내 소음 최소화',
+      },
+      {
+        step: 3,
+        title: '유후인 관광 스팟 정문 하차 & 픽업 대기',
+        place: '긴린코 호수 입구 & 유노츠보 거리 앞',
+        action: '관광 스팟 입구에 가족을 내려드리고, 기사님은 인근 전용 대기장에서 대기',
+        duration: '약 1시간 30분 자유 관광',
+        highwayOrLine: '유후인 중심가 전용 승하차 존',
+        babyPoint: '주차장 찾느라 헤매지 않고 목적지 바로 앞에 내려 유모차로 즉시 산책 시작',
+        adultPoint: '주차 요금 정산이나 주차권 챙길 필요 없이 카카오톡/전화로 기사님 호출',
+        luggageStatus: '무거운 캐리어는 차량에 그대로 두고 가벼운 가방만 들고 관광',
+      },
+      {
+        step: 4,
+        title: '벳푸 료칸 로비 현관 정문 도어투도어 도착',
+        place: '아마네 리조트 세이카이 / 스기노이 호텔 현관',
+        action: '료칸 정문 처마 밑에 정차 ➔ 기사님이 짐 하차 ➔ 호텔 지배인이 영접',
+        duration: '약 30분 소요',
+        highwayOrLine: '벳푸 온천가 직결 도로',
+        babyPoint: '차량에서 내리자마자 바로 실내 로비로 진입하여 아기 감기 완벽 예방',
+        adultPoint: '어른 3명 모두 피로도 0% 상태로 체크인 및 온천 직행 가능',
+        luggageStatus: '기사님과 료칸 직원이 객실 다다미방까지 모든 캐리어를 운반',
+      },
+    ],
+  },
+  'beppu-yufuin:express-train-bus': {
+    transportId: 'express-train-bus',
+    transportName: 'JR 특급열차 (소닉/유후인노모리) + 현지 점보택시 조합',
+    modeBadge: '🚆 일본 특급열차 낭만 & 역 앞 점보택시 직결',
+    routeTheme: '하카타역 에키벤 도시락 감성 ➔ JR 특급열차 살롱카 수유 ➔ 벳푸역 앞 점보택시',
+    totalMinutesOneWay: 110,
+    tollOrFareNote: 'JR 특급 열차 지정석 성인 3인 + 벳푸/유후인 현지 점보택시(약 ¥2,500/회)',
+    scenicHighlight: '규슈 전원 풍경과 숲속을 달리는 클래식 목조 관광열차 유후인노모리 차창 뷰',
+    babyComfortScore: 78,
+    waypoints: [
+      {
+        step: 1,
+        title: '공항 ➔ 하카타역 지하철 이동 (5분)',
+        place: '후쿠오카공항역 ➔ 하카타역 (지하철 공항선)',
+        action: '공항 국내선 터미널 직결 지하철 탑승 (단 2정거장, 5분)',
+        duration: '지하철 5분 소요',
+        highwayOrLine: '후쿠오카 시영 지하철 공항선',
+        babyPoint: '후쿠오카 공항의 독보적 장점인 초단거리 도심 직결로 대중교통 피로 최소화',
+        adultPoint: '성인 1명이 유모차 담당, 성인 2명이 28인치 캐리어 각자 운반',
+        luggageStatus: '지하철 내 휠체어/유모차 전용 공간에 캐리어와 유모차 일렬 거치',
+      },
+      {
+        step: 2,
+        title: '하카타역 에키벤 구매 & JR 특급열차 승차',
+        place: 'JR 하카타역 2번/3번 승강장',
+        action: '규슈 명물 흑돼지/소고기 도시락 구매 ➔ JR 특급 [소닉 883계] 또는 [유후인노모리] 탑승',
+        duration: '약 20분 환승 시간',
+        highwayOrLine: 'JR 가고시마 본선 / 닛포 본선',
+        babyPoint: '특급열차 4호차 다목적실(기저귀 교환대/유아 케어룸) 위치 사전 확인',
+        adultPoint: '지정석 3석 나란히 앉아 차창 밖 낭만을 즐기며 도시락 식사',
+        luggageStatus: '객실 뒤편 대형 수하물 보관석(사전 지정석 예약)에 캐리어 3개 보관',
+      },
+      {
+        step: 3,
+        title: '특급열차 차창 뷰 감상 & 차내 수유',
+        place: '기타큐슈 ➔ 벳푸완 바닷길 구간',
+        action: '푸른 바다가 보이는 철길 주행 ➔ 아기 보챌 때 살롱 라운지 칸으로 아기띠 이동',
+        duration: '약 1시간 40분 열차 여행',
+        highwayOrLine: 'JR 닛포 본선 (바다 인접 철도)',
+        babyPoint: '열차 내 넓은 통로와 라운지칸이 있어 아기를 안고 서서 달래주기 매우 편리',
+        adultPoint: '운전대를 잡지 않아 성인 3명 모두 함께 기차 맥주와 담소 만끽',
+        luggageStatus: '보관석에 고정 체결되어 있어 이동 중 신경 쓸 필요 없음',
+      },
+      {
+        step: 4,
+        title: '벳푸역 도착 & 역 광장 점보택시 환승',
+        place: 'JR 벳푸역 동쪽 출구 택시 승강장',
+        action: '개찰구 엘리베이터 이동 ➔ 6인승 점보택시 탑승 ➔ 료칸으로 이동',
+        duration: '약 10분 택시 이동',
+        highwayOrLine: '역전 온천가 중심 도로',
+        babyPoint: '기차역에서 료칸까지 짧은 10분 택시 구간으로 아기 피로 완벽 차단',
+        adultPoint: '벳푸역 온천 손물(테유) 스팟에서 아기와 따뜻한 온천수 손 담그기 체험',
+        luggageStatus: '점보택시 대형 트렁크에 캐리어 3개 + 유모차 한 번에 싣고 료칸 현관 도착',
+      },
+    ],
+  },
+
+  // ==========================================
+  // URESHINO & TAKEO
+  // ==========================================
+  'ureshino-takeo:minivan-rental': {
+    transportId: 'minivan-rental',
+    transportName: '8인승 프리미엄 미니밴 렌터카 (토요타 노아/알파드)',
+    modeBadge: '🚗 나가사키 자동차도 최단 IC 직결 & 평지 드라이브',
+    routeTheme: '후쿠오카/사가공항 ➔ 우레시노 IC (최단 50~70분) ➔ 다케오 도서관 평지 주차장',
+    totalMinutesOneWay: 65,
+    tollOrFareNote: '고속도로 왕복 약 ¥4,200 (ETC 카드 정산)',
+    scenicHighlight: '우레시노 녹차밭 언덕 파노라마와 다케오 녹나무 평지 숲길 드라이브',
+    babyComfortScore: 99,
+    waypoints: [
+      {
+        step: 1,
+        title: '공항 렌터카 수령 & 카시트 장착',
+        place: '후쿠오카공항 또는 사가공항 렌터카 데스크',
+        action: '미니밴 수령 ➔ 유아 카시트 장착 ➔ 짐 적재 (사가공항 이용 시 단 10분 만에 출발)',
+        duration: '약 20분 소요',
+        highwayOrLine: '공항 렌터카 전용 구역',
+        babyPoint: '규슈 내 최단 이동 거리 지역으로 카시트 탑승 시간 스트레스가 가장 적음',
+        adultPoint: '우레시노까지 거의 전 구간 직선 고속도로라 일본 첫 운전자에게도 난이도 최하',
+        luggageStatus: '3열 접고 캐리어 3개 + 유모차 여유롭게 평평하게 적재',
+      },
+      {
+        step: 2,
+        title: '나가사키 자동차도 직통 주행',
+        place: '다자이후 IC ➔ 우레시노 IC',
+        action: '산악 굽잇길 없는 완만한 평지 고속도로 ➔ 키야마 PA 휴게소 수유실 경유',
+        duration: '약 45분 소요',
+        highwayOrLine: '나가사키 자동차도 (長崎自動車道)',
+        babyPoint: '급커브나 험로가 전혀 없어 아기 멀미 걱정 0%',
+        adultPoint: '피로감 없는 45분 짧은 고속도로 드라이브',
+        luggageStatus: '트렁크 안전 적재 유지',
+      },
+      {
+        step: 3,
+        title: '우레시노 온천마을 료칸 주차 & 온천두부 거리',
+        place: '와라쿠엔 / 시바야 료칸 전용 주차장',
+        action: '료칸 무료 주차 ➔ 유모차 전개 ➔ 우레시노 강변 무단차 산책로 산책',
+        duration: '약 10분 이동',
+        highwayOrLine: '우레시노 온천 중심로',
+        babyPoint: '온천 마을 전체가 완전 평지 데크길이라 디럭스 유모차 밀기 최고',
+        adultPoint: '부드러운 온천수 족욕탕(아시유)에서 어른 3명 교대 발 담그기',
+        luggageStatus: '료칸 로비에 캐리어 3개 보관 후 가볍게 산책',
+      },
+    ],
+  },
+  'ureshino-takeo:private-jumbo-taxi': {
+    transportId: 'private-jumbo-taxi',
+    transportName: '프라이빗 점보택시 / 전용 밴 투어',
+    modeBadge: '🚐 최단 이동시간 55분 도어투도어 리무진',
+    routeTheme: '공항 게이트 ➔ 우레시노 료칸 정문 논스톱 55분 주파 (13개월 아기 이동 피로 제로)',
+    totalMinutesOneWay: 55,
+    tollOrFareNote: '전용 기사님 + 톨게이트 + 유류비 일체 포함',
+    scenicHighlight: '차창 밖 사가 평야와 녹차 밭 풍경',
+    babyComfortScore: 99,
+    waypoints: [
+      {
+        step: 1,
+        title: '공항 게이트 기사님 미팅',
+        place: '공항 출구 전용 밴 탑승 구역',
+        action: '기사님이 짐 싣고 즉시 출발 ➔ 우레시노 료칸으로 논스톱 직행',
+        duration: '약 5분 탑승',
+        highwayOrLine: '전용 승차장',
+        babyPoint: '겨울 추위 노출 시간 1분 이내로 아기 컨디션 최상 유지',
+        adultPoint: '출국 수속 끝나자마자 편안한 가죽 시트에 기대어 휴식',
+        luggageStatus: '트렁크에 모든 짐 안전 수납',
+      },
+      {
+        step: 2,
+        title: '우레시노 료칸 현관 정문 직결 하차',
+        place: '와라쿠엔 / 시바야 료칸 현관',
+        action: '55분 만에 료칸 현관 정문 도착 ➔ 무단차 체크인',
+        duration: '약 55분 소요',
+        highwayOrLine: '고속도로 직행',
+        babyPoint: '비행기 내린 뒤 1시간 만에 다다미방에 아기를 눕힐 수 있는 유일한 코스',
+        adultPoint: '오후 2시 체크인 직후 바로 약알칼리 미인온천 가족탕 입욕',
+        luggageStatus: '기사님과 직원이 객실로 짐 운반',
+      },
+    ],
+  },
+  'ureshino-takeo:express-train-bus': {
+    transportId: 'express-train-bus',
+    transportName: '서규슈 신칸센 + 릴레이 카모메 특급',
+    modeBadge: '🚆 최신형 서규슈 신칸센 카모메 탑승 체험',
+    routeTheme: '하카타역 릴레이 특급 ➔ 다케오온센역 신칸센 환승 ➔ 우레시노온센역 택시 5분',
+    totalMinutesOneWay: 80,
+    tollOrFareNote: 'JR 특급+신칸센 지정석 성인 3인 + 우레시노 현지 택시',
+    scenicHighlight: '2022년 개통된 최신형 서규슈 신칸센 카모메의 모던한 원목 인테리어',
+    babyComfortScore: 82,
+    waypoints: [
+      {
+        step: 1,
+        title: '하카타역 릴레이 카모메 특급 탑승',
+        place: 'JR 하카타역 ➔ 다케오온센역',
+        action: '특급열차 탑승 (50분 소요)',
+        duration: '약 50분 소요',
+        highwayOrLine: 'JR 나가사키 본선',
+        babyPoint: '좌석 앞 공간이 넓어 유모차 거치 용이',
+        adultPoint: '하카타역 도시락과 사가 명물 간식 시식',
+        luggageStatus: '열차 내 수하물 선반 거치',
+      },
+      {
+        step: 2,
+        title: '다케오온센역 대면 환승 ➔ 신칸센 카모메',
+        place: '다케오온센역 플랫폼 ➔ 우레시노온센역',
+        action: '같은 승강장 바로 맞은편 열차로 걸어서 10초 대면 환승 ➔ 신칸센 5분 탑승',
+        duration: '약 5분 탑승 (단 1정거장)',
+        highwayOrLine: '서규슈 신칸센 (西九州新幹線)',
+        babyPoint: '계단/엘리베이터 이동 없이 같은 플랫폼 맞은편으로 걸어가는 편리한 대면 환승',
+        adultPoint: '최신형 신칸센 카모메 원목 시트 및 최첨단 설비 체험',
+        luggageStatus: '평지 플랫폼 이동으로 캐리어 이동 수월',
+      },
+      {
+        step: 3,
+        title: '우레시노온센역 앞 택시 ➔ 료칸 도착',
+        place: '우레시노온센역 앞 택시 승강장 ➔ 료칸',
+        action: '역 앞 대기 택시 승차 ➔ 온천가 료칸 5분 만에 도착',
+        duration: '택시 5분 (약 ¥1,000)',
+        highwayOrLine: '우레시노 시내 도로',
+        babyPoint: '역에서 료칸까지 단 5분 거리',
+        adultPoint: '료칸 체크인 완료',
+        luggageStatus: '택시 트렁크 보관',
+      },
+    ],
+  },
+
+  // ==========================================
+  // YUFUIN & FUKUOKA
+  // ==========================================
+  'yufuin-fukuoka:minivan-rental': {
+    transportId: 'minivan-rental',
+    transportName: '8인승 프리미엄 미니밴 렌터카 (토요타 노아/알파드)',
+    modeBadge: '🚗 유후인 숲길 드라이브 & 후쿠오카 도심 쇼핑 연계',
+    routeTheme: '후쿠오카공항 ➔ 유후인 독채 료칸(2박) ➔ 후쿠오카 텐진/캐널시티 호텔(1박)',
+    totalMinutesOneWay: 95,
+    tollOrFareNote: '고속도로 왕복 약 ¥6,200 (ETC 카드 정산)',
+    scenicHighlight: '유후인 전원 풍경과 후쿠오카 도심 나카스 야경 드라이브',
+    babyComfortScore: 98,
+    waypoints: [
+      {
+        step: 1,
+        title: '공항 렌터카 인수 & 유후인 직행',
+        place: '후쿠오카공항 렌터카 카운터 ➔ 오이타 고속도로',
+        action: '카시트 장착 후 고속도로 진입 ➔ 야마다 SA 경유 ➔ 유후인 IC 하차',
+        duration: '약 1시간 35분 소요',
+        highwayOrLine: '오이타 고속도로',
+        babyPoint: '중간 SA 수유실 이용 및 낮잠 리듬에 맞춘 편안한 이동',
+        adultPoint: '유후인 별채 료칸 정원 내 전용 주차장 무료 주차',
+        luggageStatus: '캐리어 3개 + 유모차 트렁크 적재',
+      },
+      {
+        step: 2,
+        title: '3일차 후쿠오카 도심 호텔 이동 & 쇼핑',
+        place: '유후인 ➔ 텐진/캐널시티 호텔 주차장 ➔ 라라포트',
+        action: '도심 호텔 체크인 후 라라포트 아카짱혼포 쇼핑 및 대형마트 장보기',
+        duration: '약 1시간 30분 소요',
+        highwayOrLine: '후쿠오카 도시고속도로',
+        babyPoint: '라라포트 내 대규모 베이비파크, 전자레인지 수유실, 유아 휴게실 완비',
+        adultPoint: '어른 3명 도심 쇼핑 및 모츠나베/하카타 라멘 저녁 식사',
+        luggageStatus: '호텔 로비 벨데스크에 캐리어 보관 완료',
+      },
+    ],
+  },
+  'yufuin-fukuoka:private-jumbo-taxi': {
+    transportId: 'private-jumbo-taxi',
+    transportName: '프라이빗 점보택시 / 전용 밴 투어',
+    modeBadge: '🚐 유후인 독채 료칸 현관 & 도심 호텔 프라이빗 송영',
+    routeTheme: '후쿠오카공항 ➔ 유후인 독채 료칸 도어투도어 ➔ 3일차 후쿠오카 호텔 다이렉트 이동',
+    totalMinutesOneWay: 90,
+    tollOrFareNote: '전용 기사님, 톨비, 유류비 포함',
+    scenicHighlight: '차창 밖 전원 뷰를 보며 성인 3명 모두 피로 없이 도심 복귀',
+    babyComfortScore: 98,
+    waypoints: [
+      {
+        step: 1,
+        title: '공항 미팅 & 유후인 별채 료칸 직행',
+        place: '후쿠오카공항 ➔ 유후인 료칸 로비 현관',
+        action: '기사님이 짐 싣고 료칸 정문 앞까지 논스톱 도어투도어 이동',
+        duration: '약 1시간 30분 직행',
+        highwayOrLine: '오이타 자동차도',
+        babyPoint: '카시트 안착 후 찬바람 없이 료칸 안방까지 직행',
+        adultPoint: '운전 스트레스 제로',
+        luggageStatus: '기사님이 전담 적재/운반',
+      },
+      {
+        step: 2,
+        title: '유후인 료칸 ➔ 후쿠오카 도심 호텔 픽업 & 이동',
+        place: '유후인 체크아웃 ➔ 후쿠오카 시내 호텔 정문',
+        action: '오전 10:30 료칸 현관에서 탑승 ➔ 후쿠오카 시내 호텔 로비 하차',
+        duration: '약 1시간 30분 이동',
+        highwayOrLine: '고속도로 직통',
+        babyPoint: '짐 들고 대중교통 탈 필요 없이 차 안에서 아기 분유 수유',
+        adultPoint: '호텔 도착 즉시 도심 관광 시작',
+        luggageStatus: '호텔 로비 직결 하차',
+      },
+    ],
+  },
+  'yufuin-fukuoka:express-train-bus': {
+    transportId: 'express-train-bus',
+    transportName: 'JR 관광열차 유후인노모리 + 도심 지하철 조합',
+    modeBadge: '🚆 명품 관광열차 유후인노모리 풀코스 탑승',
+    routeTheme: '하카타역 ➔ 유후인노모리 전구간 승차 ➔ 3일차 하카타역 복귀 후 도심 쇼핑',
+    totalMinutesOneWay: 125,
+    tollOrFareNote: '유후인노모리 전 좌석 지정석 성인 3석 + 역세권 택시',
+    scenicHighlight: '일본 최고 인기 관광열차 유후인노모리의 숲속 레일웨이 뷰와 기념 촬영',
+    babyComfortScore: 80,
+    waypoints: [
+      {
+        step: 1,
+        title: '하카타역 ➔ 유후인노모리 클래식 열차 승차',
+        place: 'JR 하카타역 ➔ JR 유후인역',
+        action: '관광열차 탑승 ➔ 차내 기념 포토존 촬영 ➔ 유후인 사이다 시음',
+        duration: '약 2시간 10분 소요',
+        highwayOrLine: 'JR 규다이 본선',
+        babyPoint: '아기 안고 열차 내 포토존에서 승무원 모자 쓰고 가족 기념사진 촬영',
+        adultPoint: '유후인노모리 명물 롤케이크와 벤또 도시락 식사',
+        luggageStatus: '열차 대형 수하물 보관 공간 이용',
+      },
+      {
+        step: 2,
+        title: '유후인역 ➔ 료칸 송영 차량 이동',
+        place: 'JR 유후인역 광장 ➔ 료칸',
+        action: '료칸 전용 셔틀버스(송영) 탑승 ➔ 5분 만에 료칸 도착',
+        duration: '약 5분 셔틀',
+        highwayOrLine: '유후인 역전 거리',
+        babyPoint: '역세권 셔틀 직결로 이동 간편',
+        adultPoint: '체크인 후 온천욕',
+        luggageStatus: '셔틀 차량 수납',
+      },
+    ],
+  },
+}
+
+export function getDynamicTransportRoute(
+  regionId: RegionId,
+  transportId: string
+): DynamicTransportRoute {
+  const key = `${regionId}:${transportId}`
+  if (DYNAMIC_ROUTES[key]) return DYNAMIC_ROUTES[key]
+
+  // Fallback to minivan-rental for this region if specific combination is missing
+  const fallbackKey = `${regionId}:minivan-rental`
+  return DYNAMIC_ROUTES[fallbackKey] || DYNAMIC_ROUTES['beppu-yufuin:minivan-rental']
+}
+

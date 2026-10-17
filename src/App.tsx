@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import {
   HeroOnsenShader,
   DestinationShaderBanner,
@@ -13,7 +13,12 @@ import {
   RegionId,
   PricePlanType,
   RyokanOption,
+  getDynamicTransportRoute,
 } from './data/travelData'
+import { DynamicRouteMap } from './components/DynamicRouteMap'
+import { AuthModal } from './components/AuthModal'
+import { useAuth, SavedTravelPlan } from './context/AuthContext'
+
 
 const SHADER_MOOD_META: {
   id: OnsenShaderMood
@@ -97,6 +102,11 @@ const REGION_COMPARISON_ROWS = [
 ]
 
 export function App() {
+  const { user, dbStatus, savePlan, loadPlan, lastSavedAt, isLoading: isAuthLoading } = useAuth()
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false)
+  const [saveStatusMsg, setSaveStatusMsg] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null)
+  const [pendingSavedPlan, setPendingSavedPlan] = useState<SavedTravelPlan | null>(null)
+
   const [shaderMood, setShaderMood] = useState<OnsenShaderMood>('hinoki-wgsl')
   const [selectedRegionId, setSelectedRegionId] = useState<RegionId>('beppu-yufuin')
   const [mobileCompareTab, setMobileCompareTab] = useState<RegionId>('beppu-yufuin')
@@ -111,6 +121,61 @@ export function App() {
     'quarantine-meat': true,
     'onsen-temp': true,
   })
+
+  // Dynamic route calculation based on region and chosen transport
+  const dynamicRoute = useMemo(
+    () => getDynamicTransportRoute(selectedRegionId, selectedTransportId),
+    [selectedRegionId, selectedTransportId]
+  )
+
+  // Check for saved plan when user logs in
+  useEffect(() => {
+    if (user) {
+      loadPlan().then((plan) => {
+        if (plan) {
+          setPendingSavedPlan(plan)
+        }
+      })
+    } else {
+      setPendingSavedPlan(null)
+    }
+  }, [user])
+
+  const applySavedPlan = (plan: SavedTravelPlan) => {
+    if (plan.region_id) handleSelectRegion(plan.region_id)
+    if (plan.flight_id) setSelectedFlightId(plan.flight_id)
+    if (plan.transport_id) setSelectedTransportId(plan.transport_id)
+    if (plan.ryokan_id) setSelectedRyokanId(plan.ryokan_id)
+    if (plan.price_plan) setPricePlan(plan.price_plan)
+    if (plan.extra_budget) setExtraFoodAndTicketKRW(plan.extra_budget)
+    setPendingSavedPlan(null)
+    setSaveStatusMsg({ text: 'Neon DB에서 저장된 맞춤 플랜을 성공적으로 불러왔습니다.', type: 'success' })
+    setTimeout(() => setSaveStatusMsg(null), 4500)
+  }
+
+  const handleSaveCurrentPlan = async () => {
+    if (!user) {
+      setIsAuthModalOpen(true)
+      return
+    }
+
+    const res = await savePlan({
+      region_id: selectedRegionId,
+      flight_id: selectedFlightId,
+      transport_id: selectedTransportId,
+      ryokan_id: selectedRyokanId,
+      price_plan: pricePlan,
+      extra_budget: extraFoodAndTicketKRW,
+      notes: `규슈 온천 가족 여행 (${currentRegion.name})`,
+    })
+
+    if (res.ok) {
+      setSaveStatusMsg({ text: res.message || 'Neon DB에 맞춤 플랜이 저장되었습니다.', type: 'success' })
+    } else {
+      setSaveStatusMsg({ text: res.error || '저장에 실패했습니다.', type: 'error' })
+    }
+    setTimeout(() => setSaveStatusMsg(null), 5000)
+  }
 
   const currentRegion = useMemo(
     () => REGION_PLANS.find((r) => r.id === selectedRegionId) ?? REGION_PLANS[0],
@@ -132,6 +197,7 @@ export function App() {
     if (regionId === 'ureshino-takeo') setShaderMood('ureshino-silk')
     if (regionId === 'yufuin-fukuoka') setShaderMood('yufuin-mist')
   }
+
 
   const selectedFlight = useMemo(
     () => FLIGHT_OPTIONS.find((f) => f.id === selectedFlightId) ?? FLIGHT_OPTIONS[0],
@@ -176,36 +242,136 @@ export function App() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/85 pointer-events-none" />
 
         {/* Top Minimalist Masthead */}
-        <div className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-10 pt-6 sm:pt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-white/15 pb-4 sm:pb-5">
-          <div className="flex items-baseline justify-between sm:justify-start gap-4">
-            <span className="font-editorial text-lg sm:text-xl tracking-[0.2em] uppercase text-white">
-              KYUSHU ONSEN JOURNAL
-            </span>
-            <span className="text-[11px] sm:text-xs tracking-widest uppercase text-white/60">
-              No. 2026 — Winter
-            </span>
+        <div className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-10 pt-6 sm:pt-8 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 border-b border-white/15 pb-4 sm:pb-5">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-baseline gap-3">
+              <span className="font-editorial text-lg sm:text-xl tracking-[0.2em] uppercase text-white">
+                KYUSHU ONSEN JOURNAL
+              </span>
+              <span className="text-[11px] sm:text-xs tracking-widest uppercase text-white/60">
+                No. 2026 — Winter
+              </span>
+            </div>
+
+            {/* Neon Cloud Member Indicator Button (Mobile) */}
+            <div className="flex items-center gap-2 md:hidden">
+              <button
+                onClick={() => setIsAuthModalOpen(true)}
+                className="px-2.5 py-1 text-[11px] bg-white/10 hover:bg-white/20 text-white border border-white/20 flex items-center gap-1.5 cursor-pointer"
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    dbStatus.connected ? 'bg-emerald-400' : 'bg-amber-400'
+                  }`}
+                />
+                <span>{user ? user.name : '로그인'}</span>
+              </button>
+              <button
+                onClick={handleSaveCurrentPlan}
+                className="px-2 py-1 text-[11px] bg-[#E5C89B] text-[#191816] font-semibold cursor-pointer"
+              >
+                💾 저장
+              </button>
+            </div>
           </div>
 
-          {/* Subtle WebGPU Atmosphere Switcher */}
-          <div className="flex items-center gap-1.5 text-xs overflow-x-auto no-scrollbar py-0.5">
-            <span className="text-white/50 mr-1 hidden sm:inline tracking-wider uppercase text-[11px] shrink-0">
-              WebGPU Canvas:
-            </span>
-            {SHADER_MOOD_META.map((m) => (
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
+            {/* Subtle WebGPU Atmosphere Switcher */}
+            <div className="flex items-center gap-1.5 text-xs overflow-x-auto no-scrollbar py-0.5">
+              <span className="text-white/50 mr-1 hidden lg:inline tracking-wider uppercase text-[11px] shrink-0">
+                WebGPU:
+              </span>
+              {SHADER_MOOD_META.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setShaderMood(m.id)}
+                  className={`px-2 py-1 transition cursor-pointer text-[10px] sm:text-xs shrink-0 ${
+                    shaderMood === m.id
+                      ? 'bg-white text-[#191816] font-medium'
+                      : 'text-white/70 hover:text-white bg-white/10'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Neon Database Member Button (Desktop) */}
+            <div className="hidden md:flex items-center gap-2 pl-2 border-l border-white/15">
               <button
-                key={m.id}
-                onClick={() => setShaderMood(m.id)}
-                className={`px-2.5 py-1 transition cursor-pointer text-[11px] sm:text-xs shrink-0 ${
-                  shaderMood === m.id
-                    ? 'bg-white text-[#191816] font-medium'
-                    : 'text-white/70 hover:text-white bg-white/10'
-                }`}
+                onClick={() => setIsAuthModalOpen(true)}
+                className="px-2.5 py-1 text-[11px] sm:text-xs bg-white/10 hover:bg-white/20 text-white border border-white/20 flex items-center gap-1.5 cursor-pointer transition"
+                title="Neon Serverless DB 로그인 및 연결 상태"
               >
-                {m.label}
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    dbStatus.connected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+                  }`}
+                />
+                <span className="font-medium">{user ? `${user.name} 님` : 'Neon DB 로그인'}</span>
               </button>
-            ))}
+
+              <button
+                onClick={handleSaveCurrentPlan}
+                disabled={isAuthLoading}
+                className="px-2.5 py-1 text-[11px] sm:text-xs bg-[#E5C89B] hover:bg-[#d9b882] text-[#191816] font-semibold cursor-pointer transition shadow-xs flex items-center gap-1"
+                title="현재 선택한 플랜을 Neon DB에 저장"
+              >
+                <span>💾</span>
+                <span>{lastSavedAt ? `저장됨 (${lastSavedAt})` : '플랜 저장'}</span>
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Floating Notification / Restore Banner */}
+        {saveStatusMsg && (
+          <div className="relative z-20 max-w-6xl mx-auto px-4 sm:px-10 pt-3">
+            <div
+              className={`px-4 py-2 text-xs flex items-center justify-between border ${
+                saveStatusMsg.type === 'success'
+                  ? 'bg-emerald-950/90 text-emerald-200 border-emerald-500/50'
+                  : saveStatusMsg.type === 'error'
+                  ? 'bg-rose-950/90 text-rose-200 border-rose-500/50'
+                  : 'bg-stone-900/90 text-stone-200 border-stone-600'
+              }`}
+            >
+              <span>{saveStatusMsg.text}</span>
+              <button
+                onClick={() => setSaveStatusMsg(null)}
+                className="text-white/70 hover:text-white font-mono ml-4 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+
+        {pendingSavedPlan && (
+          <div className="relative z-20 max-w-6xl mx-auto px-4 sm:px-10 pt-3">
+            <div className="px-4 py-2.5 bg-[#E5C89B]/95 text-[#191816] border border-[#d9b882] flex flex-wrap items-center justify-between gap-3 text-xs shadow-lg">
+              <div className="flex items-center gap-2">
+                <span className="font-bold">💡 이전 저장 플랜 발견:</span>
+                <span>Neon DB에 저장된 최근 맞춤 플랜이 있습니다.</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => applySavedPlan(pendingSavedPlan)}
+                  className="px-3 py-1 bg-[#191816] text-[#F6F3EC] font-semibold hover:bg-black cursor-pointer text-xs"
+                >
+                  지금 불러오기
+                </button>
+                <button
+                  onClick={() => setPendingSavedPlan(null)}
+                  className="px-2 py-1 text-[#191816]/70 hover:text-[#191816] text-xs cursor-pointer"
+                >
+                  닫기
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
 
         {/* Center Editorial Title */}
         <div className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-10 my-auto py-10 sm:py-16 pointer-events-none">
@@ -557,7 +723,15 @@ export function App() {
         {/* ---------------------------------------------------------------
             CHAPTER 02 — ARCHITECTURAL SPLIT-COLUMN TIMELINE (DAY 01 – 04)
            --------------------------------------------------------------- */}
-        <section id="chapter-timeline" className="py-12 sm:py-20 scroll-mt-14 space-y-8">
+        <section id="chapter-timeline" className="py-12 sm:py-20 scroll-mt-14 space-y-10 sm:space-y-12">
+          {/* Real-time Dynamic Route Navigator linked with selected transportation mode */}
+          <DynamicRouteMap
+            regionId={selectedRegionId}
+            selectedTransportId={selectedTransportId}
+            onSelectTransport={setSelectedTransportId}
+            regionName={currentRegion.name}
+          />
+
           <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             {/* Left Sticky Column: Day Filter & Route Sequence */}
             <aside className="lg:col-span-4 lg:sticky lg:top-20 space-y-6 sm:space-y-8">
@@ -603,23 +777,23 @@ export function App() {
                 ))}
               </div>
 
-              {/* Mobile Route Sequence Collapsible Accordion (Mobile Only) */}
+              {/* Mobile Route Sequence Collapsible Accordion (Mobile Only, Synced with Dynamic Route) */}
               <details className="block lg:hidden bg-[#EFECE4] border border-[#DFD9CE] p-3 group">
                 <summary className="flex items-center justify-between cursor-pointer text-xs font-semibold uppercase tracking-wider text-[#5C5852]">
-                  <span>📍 {currentRegion.name.split(' ')[0]} 주요 이동 순서 (Step 01–05)</span>
+                  <span>📍 {dynamicRoute.transportName.split(' (')[0]} 이동 순서</span>
                   <span className="text-[#8C5A3C] text-[11px] group-open:hidden">펼쳐보기 ↓</span>
                   <span className="text-[#8C5A3C] text-[11px] hidden group-open:inline">접기 ↑</span>
                 </summary>
                 <div className="pt-3 mt-2 border-t border-[#D8D1C5] relative pl-5 border-l border-[#ABA396] space-y-3.5">
-                  {currentRegion.routeNodes.map((node) => (
-                    <div key={node.step} className="relative text-xs">
+                  {dynamicRoute.waypoints.map((wp) => (
+                    <div key={wp.step} className="relative text-xs">
                       <span className="absolute -left-[24px] top-1.5 w-2 h-2 rounded-full bg-[#191816]" />
-                      <div className="font-editorial italic text-[#8C5A3C]">Step 0{node.step}</div>
-                      <div className="font-semibold text-[#191816]">{node.place}</div>
-                      <div className="text-[11px] text-[#5C5852]">{node.stayOrStop}</div>
-                      {node.durationToNext && (
-                        <div className="text-[11px] text-[#8C5A3C] font-medium">↓ {node.durationToNext}</div>
-                      )}
+                      <div className="font-editorial italic text-[#8C5A3C]">
+                        Step 0{wp.step} · {wp.duration}
+                      </div>
+                      <div className="font-semibold text-[#191816]">{wp.title}</div>
+                      <div className="text-[11px] text-[#5C5852] line-clamp-1">{wp.place}</div>
+                      <div className="text-[10px] text-[#A66700] mt-0.5">👶 {wp.babyPoint}</div>
                     </div>
                   ))}
                 </div>
@@ -657,30 +831,37 @@ export function App() {
                 ))}
               </div>
 
-              {/* Desktop Minimalist Route Flow Summary (Desktop Only) */}
+              {/* Desktop Dynamic Route Flow Summary (Desktop Only, Synced with Transport) */}
               <div className="hidden lg:block p-6 bg-[#EFECE4] border border-[#DFD9CE] space-y-4">
-                <div className="text-xs tracking-[0.15em] uppercase text-[#5C5852] font-semibold">
-                  Route Sequence · {currentRegion.name}
+                <div className="flex items-center justify-between border-b border-[#D8D1C5] pb-2">
+                  <div className="text-xs tracking-[0.15em] uppercase text-[#5C5852] font-semibold">
+                    Dynamic Route Sequence
+                  </div>
+                  <span className="text-[10px] px-1.5 py-0.5 bg-[#191816] text-[#E5C89B]">
+                    실시간 연동
+                  </span>
+                </div>
+                <div className="text-xs font-semibold text-[#8C5A3C]">
+                  {dynamicRoute.modeBadge}
                 </div>
                 <div className="relative pl-5 border-l border-[#ABA396] space-y-5">
-                  {currentRegion.routeNodes.map((node) => (
-                    <div key={node.step} className="relative">
+                  {dynamicRoute.waypoints.map((wp) => (
+                    <div key={wp.step} className="relative">
                       <span className="absolute -left-[24px] top-1.5 w-2 h-2 rounded-full bg-[#191816]" />
                       <div className="text-xs font-editorial italic text-[#8C5A3C]">
-                        Step 0{node.step}
+                        Step 0{wp.step} · {wp.duration}
                       </div>
-                      <div className="text-sm font-semibold text-[#191816]">{node.place}</div>
-                      <div className="text-xs text-[#5C5852] mt-0.5">{node.stayOrStop}</div>
-                      {node.durationToNext && (
-                        <div className="text-xs text-[#8C5A3C] mt-1 font-medium">
-                          ↓ {node.durationToNext}
-                        </div>
-                      )}
+                      <div className="text-sm font-semibold text-[#191816]">{wp.title}</div>
+                      <div className="text-xs text-[#5C5852] mt-0.5 leading-snug">{wp.place}</div>
+                      <div className="text-[11px] text-[#A66700] mt-1 bg-[#FFFDF5] p-1.5 border border-[#F3E7C4]">
+                        👶 {wp.babyPoint}
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             </aside>
+
 
             {/* Right Column: Editorial Timeline Track */}
             <div className="lg:col-span-8 space-y-12 sm:space-y-16">
@@ -1460,6 +1641,36 @@ export function App() {
                     약 {perAdultKRW.toLocaleString()}원
                   </span>
                 </div>
+
+                {/* Neon DB Save & Sync Button */}
+                <div className="pt-4 border-t border-white/15 space-y-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveCurrentPlan}
+                    disabled={isAuthLoading}
+                    className="w-full py-3 bg-[#E5C89B] text-[#191816] font-semibold text-xs sm:text-sm hover:bg-[#d9b882] transition shadow cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <span>💾</span>
+                    <span>
+                      {user ? '현재 맞춤 플랜 Neon DB에 저장' : '로그인하고 플랜 Neon DB에 저장'}
+                    </span>
+                  </button>
+                  <div className="flex items-center justify-between text-[11px] text-white/50">
+                    <span className="flex items-center gap-1.5">
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          dbStatus.connected ? 'bg-emerald-400' : 'bg-amber-400'
+                        }`}
+                      />
+                      <span>{dbStatus.connected ? 'Neon DB 정상 연동' : '게스트 세션'}</span>
+                    </span>
+                    {lastSavedAt ? (
+                      <span className="text-[#E5C89B]">최근 저장: {lastSavedAt}</span>
+                    ) : (
+                      <span className="text-white/40">미저장 상태</span>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1467,30 +1678,52 @@ export function App() {
       </main>
 
       {/* Mobile Floating Bottom Estimate Bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#191816]/95 backdrop-blur-md text-[#F6F3EC] border-t border-white/15 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-2xl flex items-center justify-between gap-3">
-        <div className="min-w-0">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#191816]/95 backdrop-blur-md text-[#F6F3EC] border-t border-white/15 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-2xl flex items-center justify-between gap-2.5">
+        <div className="min-w-0 flex-1">
           <div className="text-[11px] text-[#E5C89B] truncate font-medium">
             {currentRegion.name.split(' (')[0]} · {selectedRyokan.name}
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="font-serif-kr text-base sm:text-lg font-semibold text-white tabular-nums">
+            <span className="font-serif-kr text-base font-semibold text-white tabular-nums">
               {totalBudgetKRW.toLocaleString()}원
             </span>
-            <span className="text-[10px] sm:text-xs text-white/60">
+            <span className="text-[10px] text-white/60">
               (1인 {Math.round(perAdultKRW / 10000)}만)
             </span>
           </div>
         </div>
 
-        <a
-          href="#chapter-folio"
-          className="px-3.5 py-2 bg-[#E5C89B] text-[#191816] font-semibold text-xs whitespace-nowrap hover:bg-[#d9b882] transition shadow shrink-0"
-        >
-          견적 명세서 ↓
-        </a>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            onClick={handleSaveCurrentPlan}
+            className="px-3 py-2 bg-white/15 hover:bg-white/25 text-white border border-white/25 font-medium text-xs whitespace-nowrap transition cursor-pointer"
+          >
+            💾 저장
+          </button>
+          <a
+            href="#chapter-folio"
+            className="px-3 py-2 bg-[#E5C89B] text-[#191816] font-semibold text-xs whitespace-nowrap hover:bg-[#d9b882] transition shadow cursor-pointer"
+          >
+            명세서 ↓
+          </a>
+        </div>
       </div>
+
+      {/* Neon DB Authentication & Cloud Sync Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => {
+          setSaveStatusMsg({
+            text: '로그인되었습니다. 플랜을 저장하거나 불러올 수 있습니다.',
+            type: 'success',
+          })
+          setTimeout(() => setSaveStatusMsg(null), 4000)
+        }}
+      />
     </div>
   )
 }
 
 export default App
+
