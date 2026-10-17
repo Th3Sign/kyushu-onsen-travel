@@ -16,8 +16,9 @@ import {
   getDynamicTransportRoute,
 } from './data/travelData'
 import { DynamicRouteMap } from './components/DynamicRouteMap'
-import { AuthModal } from './components/AuthModal'
+import { LoginPage } from './components/LoginPage'
 import { useAuth, SavedTravelPlan } from './context/AuthContext'
+
 
 
 const SHADER_MOOD_META: {
@@ -102,8 +103,7 @@ const REGION_COMPARISON_ROWS = [
 ]
 
 export function App() {
-  const { user, dbStatus, savePlan, loadPlan, lastSavedAt, isLoading: isAuthLoading } = useAuth()
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false)
+  const { user, dbStatus, savePlan, loadPlan, lastSavedAt, isLoading: isAuthLoading, logout } = useAuth()
   const [saveStatusMsg, setSaveStatusMsg] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [pendingSavedPlan, setPendingSavedPlan] = useState<SavedTravelPlan | null>(null)
 
@@ -154,10 +154,7 @@ export function App() {
   }
 
   const handleSaveCurrentPlan = async () => {
-    if (!user) {
-      setIsAuthModalOpen(true)
-      return
-    }
+    if (!user) return
 
     const res = await savePlan({
       region_id: selectedRegionId,
@@ -176,6 +173,7 @@ export function App() {
     }
     setTimeout(() => setSaveStatusMsg(null), 5000)
   }
+
 
   const currentRegion = useMemo(
     () => REGION_PLANS.find((r) => r.id === selectedRegionId) ?? REGION_PLANS[0],
@@ -232,6 +230,11 @@ export function App() {
     setCheckedItems((prev) => ({ ...prev, [id]: !prev[id] }))
   }
 
+  // Auth Gate: 사용자 로그인 필수 (로그인 전에는 LoginPage 렌더링)
+  if (!user) {
+    return <LoginPage />
+  }
+
   return (
     <div className="min-h-screen bg-[#F6F3EC] text-[#191816] pb-32 sm:pb-20">
       {/* =================================================================
@@ -253,22 +256,20 @@ export function App() {
               </span>
             </div>
 
-            {/* Neon Cloud Member Indicator Button (Mobile) */}
-            <div className="flex items-center gap-2 md:hidden">
+            {/* User Profile & Actions (Mobile) */}
+            <div className="flex items-center gap-1.5 md:hidden">
+              <span className="text-[11px] text-[#E5C89B] truncate max-w-[85px] font-medium">
+                {user.name}
+              </span>
               <button
-                onClick={() => setIsAuthModalOpen(true)}
-                className="px-2.5 py-1 text-[11px] bg-white/10 hover:bg-white/20 text-white border border-white/20 flex items-center gap-1.5 cursor-pointer"
+                onClick={logout}
+                className="px-2 py-1 text-[10px] bg-white/10 hover:bg-white/20 text-white border border-white/20 cursor-pointer"
               >
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    dbStatus.connected ? 'bg-emerald-400' : 'bg-amber-400'
-                  }`}
-                />
-                <span>{user ? user.name : '로그인'}</span>
+                로그아웃
               </button>
               <button
                 onClick={handleSaveCurrentPlan}
-                className="px-2 py-1 text-[11px] bg-[#E5C89B] text-[#191816] font-semibold cursor-pointer"
+                className="px-2 py-1 text-[10px] bg-[#E5C89B] text-[#191816] font-semibold cursor-pointer"
               >
                 💾 저장
               </button>
@@ -296,19 +297,21 @@ export function App() {
               ))}
             </div>
 
-            {/* Neon Database Member Button (Desktop) */}
-            <div className="hidden md:flex items-center gap-2 pl-2 border-l border-white/15">
+            {/* User Profile & Actions (Desktop) */}
+            <div className="hidden md:flex items-center gap-2.5 pl-2 border-l border-white/15">
+              <span className="text-xs text-white/90 font-medium flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span>
+                  <strong className="text-white">{user.name}</strong> 님
+                </span>
+              </span>
+
               <button
-                onClick={() => setIsAuthModalOpen(true)}
-                className="px-2.5 py-1 text-[11px] sm:text-xs bg-white/10 hover:bg-white/20 text-white border border-white/20 flex items-center gap-1.5 cursor-pointer transition"
-                title="Neon Serverless DB 로그인 및 연결 상태"
+                onClick={logout}
+                className="px-2.5 py-1 text-[11px] sm:text-xs bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border border-white/20 cursor-pointer transition"
+                title="로그아웃"
               >
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    dbStatus.connected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
-                  }`}
-                />
-                <span className="font-medium">{user ? `${user.name} 님` : 'Neon DB 로그인'}</span>
+                로그아웃
               </button>
 
               <button
@@ -323,6 +326,7 @@ export function App() {
             </div>
           </div>
         </div>
+
 
         {/* Floating Notification / Restore Banner */}
         {saveStatusMsg && (
@@ -1708,22 +1712,10 @@ export function App() {
           </a>
         </div>
       </div>
-
-      {/* Neon DB Authentication & Cloud Sync Modal */}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        onSuccess={() => {
-          setSaveStatusMsg({
-            text: '로그인되었습니다. 플랜을 저장하거나 불러올 수 있습니다.',
-            type: 'success',
-          })
-          setTimeout(() => setSaveStatusMsg(null), 4000)
-        }}
-      />
     </div>
   )
 }
+
 
 export default App
 
