@@ -73,8 +73,8 @@ export function App() {
 
   const [shaderMood, setShaderMood] = useState<OnsenShaderMood>('hinoki-wgsl')
   const [activeDayFilter, setActiveDayFilter] = useState<number | 'all'>('all')
-  const [selectedYufuinRyokanId, setSelectedYufuinRyokanId] = useState<string>('yufuin-sansuikan')
-  const [selectedBeppuRyokanId, setSelectedBeppuRyokanId] = useState<string>('suginoi-sora')
+  const [selectedYufuinRyokanId, setSelectedYufuinRyokanId] = useState<string>('yufuin-yufuintei')
+  const [selectedBeppuRyokanId, setSelectedBeppuRyokanId] = useState<string>('seikai-p')
   const [pricePlan, setPricePlan] = useState<PricePlanType>('ota-halfboard')
   const [extraFoodAndTicketKRW, setExtraFoodAndTicketKRW] = useState<number>(650000)
 
@@ -971,7 +971,7 @@ export function App() {
                 Step 01 · Day 1 (12월 21일 월요일 · 1박)
               </div>
               <h3 className="font-serif-kr text-xl sm:text-2xl font-medium text-[#191816] mt-0.5">
-                유후인 1박 추천 료칸 3선 (공항 리무진 하차 & 다음 날 JR 특급열차 탑승 최적)
+                유후인 1박 추천 료칸 6선 — 독채 별채 노천탕부터 역 도보·유노츠보 가성비 료칸까지 (성인 3인 1실 기준)
               </h3>
             </div>
 
@@ -993,10 +993,10 @@ export function App() {
           <div className="space-y-5 pt-4">
             <div className="border-l-4 border-[#191816] pl-4">
               <div className="text-xs font-semibold uppercase tracking-wider text-[#8C5A3C]">
-                Step 02 · Day 2 ~ Day 3 (12월 22일 화 ~ 24일 목 · 2박 연박)
+                Step 02 · Day 2 ~ Day 3 (12월 22일 화 ~ 24일 목 · 2박 연박 확정)
               </div>
               <h3 className="font-serif-kr text-xl sm:text-2xl font-medium text-[#191816] mt-0.5">
-                벳푸 2박 연박 추천 숙소 4선 — 가성비 웰컴베이비(25~36만/박)부터 하이클래스 세이카이(68~98만/박)까지
+                벳푸 2박 연박 확정 숙소 — 아마네 리조트 세이카이 P타입 「아사기리(朝霧)」 129㎡ 최상층 스위트 vs 일반 객실 비교
               </h3>
             </div>
 
