@@ -75,7 +75,7 @@ export const DynamicRouteMap: React.FC<DynamicRouteMapProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-between text-xs font-semibold">
-                  <span>{t.id === 'minivan-rental' ? '🚗 렌터카 미니밴' : t.id === 'private-jumbo-taxi' ? '🚐 프라이빗 점보택시' : '🚆 JR 관광열차/신칸센'}</span>
+                  <span>{t.id === 'minivan-rental' ? '🚗 렌터카 미니밴' : t.id === 'private-jumbo-taxi' ? '🚐 프라이빗 점보택시' : '🚌 공항리무진 + 🚆 특급열차 (확정)'}</span>
                   <span className={`text-[10px] font-mono ${isSelected ? 'text-[#E5C89B]' : 'text-[#8C5A3C]'}`}>
                     {isSelected ? '● 활성' : '선택'}
                   </span>

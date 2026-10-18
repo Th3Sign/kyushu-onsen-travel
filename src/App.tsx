@@ -72,31 +72,31 @@ function getRyokanNightJPY(r: RyokanOption, plan: PricePlanType): number {
 const REGION_COMPARISON_ROWS = [
   {
     criterion: '권장 우선순위',
-    beppu: '01순위 — 리조트·수족관·사파리 올라운드',
+    beppu: '01순위 [확정 ✅] — 유후인 1박 + 벳푸 2박 올라운드',
     ureshino: '02순위 — 최단 이동시간 & 피부 저자극 온천',
     yufuin: '03순위 — 프라이빗 독채 료칸 & 시내 쇼핑',
   },
   {
     criterion: '이용 공항 및 이동시간',
-    beppu: '오이타공항 35분 / 후쿠오카공항 1시간 40분',
+    beppu: '오이타공항 직항 확정 (리무진 55분 → 유후인 / 특급열차 60분 → 벳푸)',
     ureshino: '사가공항 50분 / 후쿠오카공항 1시간 10분',
     yufuin: '후쿠오카공항 1시간 35분',
   },
   {
     criterion: '온천수 천질 (13개월 아기)',
-    beppu: '단순온천 · 나트륨 염화물천 (보온·무자극)',
+    beppu: '단순온천(유후인) · 나트륨 염화물천(벳푸) — 무자극 보온',
     ureshino: '나트륨 탄산수소염천 (일본 3대 미인온천·약알칼리)',
     yufuin: '무색무취 단순온천 (눈·입 접촉 시에도 저자극)',
   },
   {
     criterion: '성인 3인 + 유아 1인 객실',
-    beppu: '65~80㎡ 화양실 (침대 2 + 다다미 요이불 2 + 오션뷰 노천탕)',
+    beppu: '유후인 화양실(1박) + 벳푸 65~80㎡ 오션뷰 노천탕 화양실(2박 연박)',
     ureshino: '전통 다다미 화실/화양실 + 객실 내 조·석식(오헤야쇼쿠)',
     yufuin: '독립 별채(하나레) 화실 + 전용 정원 노천탕',
   },
   {
     criterion: '주요 유모차 동선',
-    beppu: '우미타마고 수족관(무단차) · 아프리칸 사파리(자차 탑승)',
+    beppu: '긴린코 호수 평지 산책 · 우미타마고 수족관(무단차) · 가마도 지옥',
     ureshino: '다케오 어린이 도서관 · 우레시노 강변 평지 산책로',
     yufuin: '긴린코 호수 데크길 · 라라포트 후쿠오카(아카짱혼포)',
   },
@@ -111,8 +111,8 @@ export function App() {
   const [selectedRegionId, setSelectedRegionId] = useState<RegionId>('beppu-yufuin')
   const [mobileCompareTab, setMobileCompareTab] = useState<RegionId>('beppu-yufuin')
   const [activeDayFilter, setActiveDayFilter] = useState<number | 'all'>('all')
-  const [selectedFlightId, setSelectedFlightId] = useState<string>('ke-fuk-morning')
-  const [selectedTransportId, setSelectedTransportId] = useState<string>('minivan-rental')
+  const [selectedFlightId, setSelectedFlightId] = useState<string>('7c-oit-direct')
+  const [selectedTransportId, setSelectedTransportId] = useState<string>('express-train-bus')
   const [selectedRyokanId, setSelectedRyokanId] = useState<string>('seikai')
   const [pricePlan, setPricePlan] = useState<PricePlanType>('ota-halfboard')
   const [extraFoodAndTicketKRW, setExtraFoodAndTicketKRW] = useState<number>(650000)
@@ -213,9 +213,30 @@ export function App() {
     [allRyokans, selectedRyokanId, currentRegion]
   )
 
+  // 유후인 1박 + 벳푸 2박 조합 계산 지원
+  const yufuin1NightRyokan = useMemo(
+    () => allRyokans.find((r) => r.id === 'yufuin-hoteiya') ?? currentRegion.ryokans[0],
+    [allRyokans, currentRegion]
+  )
+  const beppu2NightRyokan = useMemo(() => {
+    if (selectedRyokan.id === 'suginoi-sora') return selectedRyokan
+    return allRyokans.find((r) => r.id === 'seikai') ?? selectedRyokan
+  }, [allRyokans, selectedRyokan])
+
   const selectedNightKRW = getRyokanNightKRW(selectedRyokan, pricePlan)
-  const totalStay3NightsKRW = selectedNightKRW * 3
-  const rackStay3NightsKRW = selectedRyokan.pricePerNightKRW * 3
+  const yufuin1NightKRW = getRyokanNightKRW(yufuin1NightRyokan, pricePlan)
+  const beppu1NightKRW = getRyokanNightKRW(beppu2NightRyokan, pricePlan)
+
+  const totalStay3NightsKRW =
+    selectedRegionId === 'beppu-yufuin'
+      ? yufuin1NightKRW + beppu1NightKRW * 2
+      : selectedNightKRW * 3
+
+  const rackStay3NightsKRW =
+    selectedRegionId === 'beppu-yufuin'
+      ? yufuin1NightRyokan.pricePerNightKRW + beppu2NightRyokan.pricePerNightKRW * 2
+      : selectedRyokan.pricePerNightKRW * 3
+
   const savedOnStayKRW = Math.max(0, rackStay3NightsKRW - totalStay3NightsKRW)
 
   const totalBudgetKRW =
@@ -1576,7 +1597,7 @@ export function App() {
                 <div className="pt-4 flex justify-between items-start gap-3">
                   <div>
                     <div className="text-white font-medium">
-                      02. 숙박 3박 (
+                      02. 숙박 3박 합산 (
                       {pricePlan === 'ota-breakfast'
                         ? '조식포함'
                         : pricePlan === 'ota-halfboard'
@@ -1584,10 +1605,21 @@ export function App() {
                         : '공식 정가'}
                       )
                     </div>
-                    <div className="text-xs text-white/60 mt-0.5">{selectedRyokan.name}</div>
-                    <div className="text-[11px] text-white/45">
-                      1박 {selectedNightKRW.toLocaleString()}원 × 3박 (3인 1실)
-                    </div>
+                    {selectedRegionId === 'beppu-yufuin' ? (
+                      <>
+                        <div className="text-xs text-white/75 mt-1 space-y-0.5">
+                          <div>• 유후인 1박: {yufuin1NightRyokan.name.split(' (')[0]} ({yufuin1NightKRW.toLocaleString()}원)</div>
+                          <div>• 벳푸 2박: {beppu2NightRyokan.name.split(' (')[0]} ({beppu1NightKRW.toLocaleString()}원×2박)</div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-xs text-white/60 mt-0.5">{selectedRyokan.name}</div>
+                        <div className="text-[11px] text-white/45">
+                          1박 {selectedNightKRW.toLocaleString()}원 × 3박 (3인 1실)
+                        </div>
+                      </>
+                    )}
                     {savedOnStayKRW > 0 && (
                       <div className="text-[11px] text-[#E5C89B] mt-1">
                         → 정가 대비 3박 {savedOnStayKRW.toLocaleString()}원 절감
@@ -1601,9 +1633,12 @@ export function App() {
 
                 <div className="pt-4 flex justify-between items-start gap-3">
                   <div>
-                    <div className="text-white font-medium">03. 현지 전용 차량 (4일)</div>
+                    <div className="text-white font-medium">03. 현지 이동 수단 (4일)</div>
                     <div className="text-xs text-white/60 mt-0.5">
                       {selectedTransport.name.split(' (')[0]}
+                    </div>
+                    <div className="text-[11px] text-white/45 mt-0.5">
+                      {selectedTransport.subtitle}
                     </div>
                   </div>
                   <div className="tabular-nums font-medium text-white whitespace-nowrap">
