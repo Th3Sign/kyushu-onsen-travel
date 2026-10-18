@@ -74,7 +74,7 @@ export function App() {
   const [shaderMood, setShaderMood] = useState<OnsenShaderMood>('hinoki-wgsl')
   const [activeDayFilter, setActiveDayFilter] = useState<number | 'all'>('all')
   const [selectedYufuinRyokanId, setSelectedYufuinRyokanId] = useState<string>('yufuin-sansuikan')
-  const [selectedBeppuRyokanId, setSelectedBeppuRyokanId] = useState<string>('seikai')
+  const [selectedBeppuRyokanId, setSelectedBeppuRyokanId] = useState<string>('suginoi-sora')
   const [pricePlan, setPricePlan] = useState<PricePlanType>('ota-halfboard')
   const [extraFoodAndTicketKRW, setExtraFoodAndTicketKRW] = useState<number>(650000)
 
@@ -996,11 +996,11 @@ export function App() {
                 Step 02 · Day 2 ~ Day 3 (12월 22일 화 ~ 24일 목 · 2박 연박)
               </div>
               <h3 className="font-serif-kr text-xl sm:text-2xl font-medium text-[#191816] mt-0.5">
-                벳푸 2박 연박 추천 오션뷰 리조트 3선 (JR 벳푸역 도착 & 오이타공항 에어라이너 직결)
+                벳푸 2박 연박 추천 숙소 4선 — 가성비 웰컴베이비(25~36만/박)부터 하이클래스 세이카이(68~98만/박)까지
               </h3>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 gap-6">
               {BEPPU_RYOKANS.map((r) =>
                 renderRyokanCard(
                   r,
