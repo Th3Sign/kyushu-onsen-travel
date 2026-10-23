@@ -16,6 +16,7 @@ import {
   RyokanOption,
 } from './data/travelData'
 import { DynamicRouteMap } from './components/DynamicRouteMap'
+import { DayRouteVisualizer } from './components/DayRouteVisualizer'
 import { LoginPage } from './components/LoginPage'
 import { useAuth, SavedTravelPlan } from './context/AuthContext'
 
@@ -693,9 +694,17 @@ export function App() {
         </section>
 
         {/* ---------------------------------------------------------------
-            CHAPTER 02 — CHRONOLOGICAL 4-DAY TIMELINE
+            CHAPTER 02 — CHRONOLOGICAL 4-DAY TIMELINE & INTERACTIVE ROUTE MAP
            --------------------------------------------------------------- */}
         <section id="chapter-timeline" className="py-12 sm:py-18 scroll-mt-14 space-y-10">
+          {/* Interactive Day-by-Day Route Map Visualizer */}
+          <DayRouteVisualizer
+            activeDayFilter={activeDayFilter}
+            onSelectDay={setActiveDayFilter}
+            selectedYufuinRyokan={selectedYufuinRyokan}
+            selectedBeppuRyokan={selectedBeppuRyokan}
+          />
+
           <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             {/* Left Sticky Column */}
             <aside className="lg:col-span-4 lg:sticky lg:top-16 space-y-6">
@@ -820,15 +829,25 @@ export function App() {
                           {dayPlan.theme}
                         </h3>
                       </div>
-                      <div className="text-xs text-[#5C5852] sm:text-right shrink-0">
+                      <div className="text-xs text-[#5C5852] sm:text-right shrink-0 space-y-1.5">
                         <div className="font-semibold text-[#191816]">
                           일일 대중교통/택시 탑승: 총 {dayPlan.totalTransitMinutes}분
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveDayFilter(dayPlan.day)
+                            document.getElementById('chapter-timeline')?.scrollIntoView({ behavior: 'smooth' })
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#191816] text-[#E5C89B] text-[11px] font-semibold hover:bg-[#33312E] transition cursor-pointer"
+                        >
+                          <span>🗺️ Day 0{dayPlan.day} 지도 경로 포커스</span>
+                        </button>
                       </div>
                     </div>
 
-                    <div className="bg-[#EFECE4] px-4 py-2.5 border border-[#DFD9CE] text-xs text-[#3D3A35] font-medium">
-                      📍 동선 흐름: {dayPlan.routeSummary}
+                    <div className="bg-[#EFECE4] px-4 py-2.5 border border-[#DFD9CE] text-xs text-[#3D3A35] font-medium flex flex-wrap items-center justify-between gap-2">
+                      <span>📍 동선 흐름: {dayPlan.routeSummary}</span>
                     </div>
 
                     <div className="relative pl-5 sm:pl-8 border-l border-[#C8C1B4] space-y-10 sm:space-y-12">
