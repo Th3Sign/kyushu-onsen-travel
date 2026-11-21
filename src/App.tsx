@@ -12,6 +12,7 @@ import {
   CONFIRMED_TRANSIT_COST,
   BABY_CHECKLIST,
   OTA_BOOKING_GUIDE,
+  MEAL_AND_BABY_SCHEDULE,
   RyokanOption,
 } from './data/travelData'
 import { DynamicRouteMap } from './components/DynamicRouteMap'
@@ -574,7 +575,7 @@ function TravelJournal() {
                 </div>
                 <p className="text-xs text-[#5C5852]">
                   • 10:05경 벳푸역 앞([B]노선, 도보 1분) 또는 10:20 키타하마(전 노선) 에어라이너 탑승 ➔ 11:03~11:10 공항 도착
-                  <br />• 공항 국내선 2층 식당가 점심 & 1층 무료 온천 족욕탕 체험 후 여유롭게 출국
+                  <br />• 공항 국내선 3층 「나나세」 식당가 점심(12:10) & 2층 수유실(아기 13:00 점심) · 1층 무료 족욕탕 체험 후 출국
                 </p>
               </div>
             </div>
@@ -599,6 +600,85 @@ function TravelJournal() {
             CHAPTER 02 — CHRONOLOGICAL 4-DAY TIMELINE & INTERACTIVE ROUTE MAP
            --------------------------------------------------------------- */}
         <section id="chapter-timeline" className="py-12 sm:py-18 scroll-mt-14 space-y-10">
+          {/* Baby Routine (08/13/18/20) & 4-Day Meal Master Table */}
+          <div className="bg-white border-2 border-[#191816] p-5 sm:p-6 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#DFD9CE] pb-3">
+              <div>
+                <div className="text-[11px] tracking-[0.18em] uppercase text-[#8C5A3C] font-bold">
+                  Baby Routine & Verified Restaurant Guide (12/21 월 ~ 12/24 목)
+                </div>
+                <h3 className="font-serif-kr text-base sm:text-lg font-semibold text-[#191816] mt-0.5">
+                  🍼 아기 루틴(아침 08:00 · 점심 13:00 · 저녁 18:00 · 취침 20:00) & 4일 조·중·석식 마스터 표
+                </h3>
+              </div>
+              <span className="text-xs px-2.5 py-1 bg-[#191816] text-[#E5C89B] font-semibold">
+                산스이칸 2식 포함 · 온야도 노노 조식만 포함
+              </span>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4 text-xs">
+              {MEAL_AND_BABY_SCHEDULE.map((m) => (
+                <div key={m.day} className="p-4 border border-[#D8D1C5] bg-[#FAF8F4] space-y-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#DFD9CE] pb-2">
+                    <span className="font-bold text-[#191816] text-sm">{m.dateLabel}</span>
+                    <span className="px-2 py-0.5 bg-[#EFECE4] border border-[#DFD9CE] text-[11px] font-semibold text-[#8C5A3C]">
+                      {m.stayInfo}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 text-[#3D3A35] leading-relaxed">
+                    <div className="flex items-start gap-2">
+                      <span className="px-1.5 py-0.5 bg-[#191816] text-[#F6F3EC] font-mono text-[10px] shrink-0 mt-0.5">
+                        조식 08:00
+                      </span>
+                      <div>
+                        <span className="font-semibold text-[#191816]">{m.breakfast.place}</span>
+                        {m.breakfast.included && (
+                          <span className="ml-1.5 text-[10px] text-emerald-700 font-bold">[숙소 포함]</span>
+                        )}
+                        <p className="text-[11px] text-[#5C5852]">{m.breakfast.note}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-2">
+                      <span className="px-1.5 py-0.5 bg-[#8C5A3C] text-white font-mono text-[10px] shrink-0 mt-0.5">
+                        중식 13:00
+                      </span>
+                      <div>
+                        <span className="font-semibold text-[#191816]">{m.lunch.primary}</span>
+                        <span className="ml-1.5 text-[10px] text-[#8C5A3C] font-semibold">
+                          (대안: {m.lunch.backup})
+                        </span>
+                        <p className="text-[11px] text-[#5C5852]">{m.lunch.babyNote}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-2">
+                      <span className="px-1.5 py-0.5 bg-[#29527A] text-white font-mono text-[10px] shrink-0 mt-0.5">
+                        석식 18:00
+                      </span>
+                      <div>
+                        <span className="font-semibold text-[#191816]">{m.dinner.primary}</span>
+                        {m.dinner.included ? (
+                          <span className="ml-1.5 text-[10px] text-emerald-700 font-bold">[숙소 포함]</span>
+                        ) : (
+                          <span className="ml-1.5 text-[10px] text-[#29527A] font-semibold">
+                            (대안: {m.dinner.backup})
+                          </span>
+                        )}
+                        <p className="text-[11px] text-[#5C5852]">{m.dinner.babyNote}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-[#DFD9CE] text-[11px] text-[#6D4C00] bg-[#FFFDF5] p-2">
+                    <strong>😴 20:00 취침 후:</strong> {m.bedtimeAndAdultTime}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Interactive Day-by-Day Route Map Visualizer */}
           <DayRouteVisualizer
             activeDayFilter={activeDayFilter}
@@ -879,10 +959,10 @@ function TravelJournal() {
                   유후인 산스이칸 (ゆふいん山水館)
                 </div>
                 <ul className="space-y-1 text-[#3D3A35] leading-relaxed">
+                  <li>• <strong>식사 조건:</strong> <strong>석식(18:00) + 조식(08:00) 2식 포함 확정 ✅</strong> (와규 뷔페 · 주류 무제한)</li>
                   <li>• <strong>위치·짐:</strong> 유후인역 평지 도보 8분 · 도착 즉시 프런트 무료 짐보관 (도보 2분 맥스밸류 마트)</li>
-                  <li>• <strong>체크인/아웃:</strong> 체크인 15:00~19:00 / 체크아웃 10:00</li>
-                  <li>• <strong>온천 팩트:</strong> 별도 공용 전세 가족탕 없음 → <strong>아기는 객실 욕실 목욕</strong>, 어른은 2:1 교대 노천 대욕장</li>
-                  <li>• <strong>무료 특전:</strong> 라운지 주류·안주(15:00~24:00), 소프트드링크·아이스크림(15:00~10:00), 와규 뷔페 주류 무제한</li>
+                  <li>• <strong>온천·취침:</strong> 별도 전세탕 없음 → <strong>19:15 아기 객실 욕실 목욕 → 20:00 취침</strong> · 어른 교대 노천 대욕장</li>
+                  <li>• <strong>무료 특전:</strong> 라운지 주류·안주(15:00~24:00), 소프트드링크·아이스크림(15:00~10:00)</li>
                 </ul>
               </div>
 
@@ -897,10 +977,10 @@ function TravelJournal() {
                   온야도 노노 벳푸 (別府八湯 御宿 野乃別府)
                 </div>
                 <ul className="space-y-1 text-[#3D3A35] leading-relaxed">
-                  <li>• <strong>위치·짐:</strong> JR 벳푸역 동쪽 출구 도보 1분 · 하차 직후 무료 짐보관 · 전 관내 맨발 다다미(바퀴 세척)</li>
-                  <li>• <strong>체크인/아웃:</strong> 체크인 15:00 / 체크아웃 11:00 (만 0~2세 소이네 및 조·석식 완전 무료!)</li>
+                  <li>• <strong>식사 조건:</strong> <strong>조식(08:00 카이센동 뷔페)만 포함 확정 ✅</strong> · 중·석식은 도보 2~10분 벳푸 맛집 이용</li>
+                  <li>• <strong>위치·짐:</strong> JR 벳푸역 동쪽 출구 도보 1분 · 하차 직후 무료 짐보관 · 전 관내 맨발 다다미(만 0~2세 무료)</li>
                   <li>• <strong>온천 팩트:</strong> <strong>13층 무료 전세 가족탕 7개</strong>(예약 없이 선착순·객실 TV 공실 확인) → 아기 첫 천연 온천 최적!</li>
-                  <li>• <strong>무료 특전:</strong> 무료 아이스크림(15:00~25:00), 유산균 음료(05:00~10:00), 요나키 소바(21:30~23:00)</li>
+                  <li>• <strong>20시 취침 후:</strong> 무료 요나키 소바(21:30~23:00), 도보 8분 돈키호테(새벽 2시), 무료 아이스크림/유산균</li>
                 </ul>
               </div>
             </div>
