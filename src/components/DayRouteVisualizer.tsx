@@ -83,6 +83,21 @@ const DAY_META: Record<
   },
 }
 
+const MAP_TILES: Record<'osm' | 'gsi', { url: string; attribution: string; maxZoom: number; label: string }> = {
+  osm: {
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19,
+    label: 'OSM 기본',
+  },
+  gsi: {
+    url: 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png',
+    attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院 (GSI Japan)</a>',
+    maxZoom: 18,
+    label: '일본 국토지리원',
+  },
+}
+
 export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
   activeDayFilter,
   onSelectDay,
@@ -90,10 +105,12 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
   selectedBeppuRyokan,
 }) => {
   const [viewMode, setViewMode] = useState<'map' | 'schematic'>('map')
+  const [mapTileStyle, setMapTileStyle] = useState<'osm' | 'gsi'>('osm')
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null)
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
   const mapInstanceRef = useRef<L.Map | null>(null)
   const layerGroupRef = useRef<L.LayerGroup | null>(null)
+  const tileLayerRef = useRef<L.TileLayer | null>(null)
 
   const yufuinCoord = RYOKAN_COORDS[selectedYufuinRyokan.id] || RYOKAN_COORDS['yufuin-sansuikan']
   const beppuCoord = RYOKAN_COORDS[selectedBeppuRyokan.id] || RYOKAN_COORDS['beppu-onyado-nono']
@@ -444,9 +461,18 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
     }&travelmode=driving`
   }, [filteredStops])
 
-  // Initialize Leaflet Map
+  // Initialize Leaflet Map (cleanup when switching away from map view)
   useEffect(() => {
-    if (viewMode !== 'map' || !mapContainerRef.current) return
+    if (viewMode !== 'map') {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove()
+        mapInstanceRef.current = null
+        layerGroupRef.current = null
+        tileLayerRef.current = null
+      }
+      return
+    }
+    if (!mapContainerRef.current) return
 
     if (!mapInstanceRef.current) {
       const map = L.map(mapContainerRef.current, {
@@ -456,11 +482,10 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
         zoomControl: true,
       })
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 19,
+      const tileCfg = MAP_TILES[mapTileStyle]
+      tileLayerRef.current = L.tileLayer(tileCfg.url, {
+        attribution: tileCfg.attribution,
+        maxZoom: tileCfg.maxZoom,
       }).addTo(map)
 
       layerGroupRef.current = L.layerGroup().addTo(map)
@@ -606,6 +631,34 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
       map.invalidateSize()
     }, 120)
   }, [viewMode, activeDayFilter, filteredStops, allStops, activeSelectedStop])
+
+  // Switch map tile layer cleanly when user toggles OSM / GSI Japan (API key free)
+  useEffect(() => {
+    const map = mapInstanceRef.current
+    if (!map || viewMode !== 'map') return
+
+    if (tileLayerRef.current) {
+      map.removeLayer(tileLayerRef.current)
+    }
+    const tileCfg = MAP_TILES[mapTileStyle]
+    tileLayerRef.current = L.tileLayer(tileCfg.url, {
+      attribution: tileCfg.attribution,
+      maxZoom: tileCfg.maxZoom,
+    }).addTo(map)
+    tileLayerRef.current.bringToBack()
+  }, [mapTileStyle, viewMode])
+
+  // Unmount cleanup
+  useEffect(() => {
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove()
+        mapInstanceRef.current = null
+        layerGroupRef.current = null
+        tileLayerRef.current = null
+      }
+    }
+  }, [])
 
   // Focus map when user clicks a stop pill
   const handleSelectStop = (stop: MapStop) => {
@@ -772,6 +825,24 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
               ref={mapContainerRef}
               className="w-full h-[340px] sm:h-[430px] z-10 bg-[#E6E2D8]"
             />
+
+            {/* Free No-API-Key Tile Style Toggle (OSM / GSI Japan) */}
+            <div className="absolute top-3 right-3 z-20 inline-flex bg-[#191816]/90 backdrop-blur-xs border border-white/20 p-0.5 text-[10px] shadow">
+              {(['osm', 'gsi'] as const).map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setMapTileStyle(key)}
+                  className={`px-2 py-1 transition cursor-pointer font-semibold ${
+                    mapTileStyle === key
+                      ? 'bg-[#E5C89B] text-[#191816]'
+                      : 'text-white/80 hover:text-white'
+                  }`}
+                >
+                  {MAP_TILES[key].label}
+                </button>
+              ))}
+            </div>
 
             {/* Map Legend Overlay */}
             <div className="absolute bottom-3 left-3 z-20 bg-[#191816]/90 backdrop-blur-xs text-white px-3 py-2 text-[11px] flex flex-wrap items-center gap-3 border border-white/15 shadow">

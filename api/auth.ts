@@ -3,13 +3,15 @@ import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
 
+const SESSION_COOKIE_NAME = 'travel_session'
+const SESSION_TTL_SECONDS = 60 * 60 * 24 * 14 // 14 days
+
 // Helper to retrieve database connection string from environment or .env
 function getDbConnectionString(): string | null {
   if (process.env.NEON_URL) return process.env.NEON_URL
   if (process.env.DATABASE_URL) return process.env.DATABASE_URL
   if (process.env.POSTGRES_URL) return process.env.POSTGRES_URL
 
-  // Read .env or .env.local if running in local Node environment
   for (const envFile of ['.env', '.env.local']) {
     try {
       const p = path.resolve(process.cwd(), envFile)
@@ -39,15 +41,85 @@ function hashPassword(password: string): string {
   return crypto.createHash('sha256').update(password).digest('hex')
 }
 
+function parseCookies(cookieHeader: string | undefined): Record<string, string> {
+  if (!cookieHeader) return {}
+  const result: Record<string, string> = {}
+  for (const part of cookieHeader.split(';')) {
+    const idx = part.indexOf('=')
+    if (idx === -1) continue
+    const key = part.slice(0, idx).trim()
+    const val = part.slice(idx + 1).trim()
+    if (key) result[key] = decodeURIComponent(val)
+  }
+  return result
+}
+
+function extractSessionToken(req: any): string | null {
+  const headers = req?.headers || {}
+  const authHeader = headers.authorization || headers.Authorization
+  if (typeof authHeader === 'string' && authHeader.toLowerCase().startsWith('bearer ')) {
+    const token = authHeader.slice(7).trim()
+    if (token) return token
+  }
+  const cookies = parseCookies(headers.cookie || headers.Cookie)
+  return cookies[SESSION_COOKIE_NAME] || null
+}
+
+function setSessionCookie(req: any, res: any, token: string, maxAgeSeconds: number) {
+  const proto = req?.headers?.['x-forwarded-proto'] || ''
+  const isHttps = proto === 'https' || !!req?.socket?.encrypted
+  const parts = [
+    `${SESSION_COOKIE_NAME}=${encodeURIComponent(token)}`,
+    'HttpOnly',
+    'Path=/',
+    'SameSite=Lax',
+    `Max-Age=${maxAgeSeconds}`,
+  ]
+  if (isHttps) parts.push('Secure')
+  res.setHeader('Set-Cookie', parts.join('; '))
+}
+
+async function createSession(sql: any, userId: number, email: string): Promise<string> {
+  const token = crypto.randomBytes(32).toString('hex')
+  await sql`
+    INSERT INTO travel_sessions (token, user_id, user_email, expires_at)
+    VALUES (${token}, ${userId}, ${email}, NOW() + INTERVAL '14 days')
+  `
+  return token
+}
+
+async function getAuthenticatedUser(
+  sql: any,
+  req: any
+): Promise<{ id: number; email: string; name: string } | null> {
+  const token = extractSessionToken(req)
+  if (!token) return null
+
+  const rows = await sql`
+    SELECT u.id, u.email, u.name
+    FROM travel_sessions s
+    JOIN travel_users u ON u.id = s.user_id
+    WHERE s.token = ${token} AND s.expires_at > NOW()
+    LIMIT 1
+  `
+  if (rows.length === 0) return null
+  const row = rows[0]
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.name || row.email.split('@')[0],
+  }
+}
+
 // Vercel Serverless Function & Vite dev middleware handler
 export default async function handler(req: any, res: any) {
-  // CORS headers
+  const reqOrigin = req?.headers?.origin
   res.setHeader('Access-Control-Allow-Credentials', 'true')
-  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Origin', reqOrigin || '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT')
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'Authorization, X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
   )
 
   if (req.method === 'OPTIONS') {
@@ -82,6 +154,15 @@ export default async function handler(req: any, res: any) {
         email VARCHAR(255) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
         name VARCHAR(100),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `
+    await sql`
+      CREATE TABLE IF NOT EXISTS travel_sessions (
+        token VARCHAR(128) PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES travel_users(id) ON DELETE CASCADE,
+        user_email VARCHAR(255) NOT NULL,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `
@@ -124,7 +205,32 @@ export default async function handler(req: any, res: any) {
     }
   }
 
-  // 2. Register
+  // 2. Session Verification (me)
+  if (action === 'me' && req.method === 'GET') {
+    try {
+      const authedUser = await getAuthenticatedUser(sql, req)
+      if (!authedUser) {
+        return res.status(401).json({
+          ok: false,
+          authenticated: false,
+          user: null,
+        })
+      }
+      return res.status(200).json({
+        ok: true,
+        authenticated: true,
+        user: authedUser,
+      })
+    } catch (err: any) {
+      return res.status(500).json({
+        ok: false,
+        authenticated: false,
+        error: '세션 확인 실패: ' + err.message,
+      })
+    }
+  }
+
+  // 3. Register
   if (action === 'register' && req.method === 'POST') {
     const { email, password, name } = req.body || {}
     if (!email || !password) {
@@ -141,14 +247,19 @@ export default async function handler(req: any, res: any) {
         return res.status(400).json({ ok: false, error: '이미 등록된 이메일 계정입니다. 로그인해주세요.' })
       }
 
-      await sql`
+      const inserted = await sql`
         INSERT INTO travel_users (email, password_hash, name)
         VALUES (${cleanEmail}, ${passwordHash}, ${cleanName})
+        RETURNING id, email, name
       `
+      const createdUser = inserted[0]
+      const token = await createSession(sql, createdUser.id, createdUser.email)
+      setSessionCookie(req, res, token, SESSION_TTL_SECONDS)
 
       return res.status(200).json({
         ok: true,
-        user: { email: cleanEmail, name: cleanName },
+        user: { id: createdUser.id, email: createdUser.email, name: createdUser.name },
+        token,
         message: '회원가입이 완료되었습니다.',
       })
     } catch (err: any) {
@@ -156,7 +267,7 @@ export default async function handler(req: any, res: any) {
     }
   }
 
-  // 3. Login
+  // 4. Login
   if (action === 'login' && req.method === 'POST') {
     const { email, password } = req.body || {}
     if (!email || !password) {
@@ -174,15 +285,19 @@ export default async function handler(req: any, res: any) {
         return res.status(401).json({ ok: false, error: '등록되지 않은 이메일입니다. 회원가입을 먼저 진행해주세요.' })
       }
 
-      // Check hash or raw password (for legacy)
       const userRow = rows[0]
       if (userRow.password_hash !== passwordHash && userRow.password_hash !== password) {
         return res.status(401).json({ ok: false, error: '비밀번호가 일치하지 않습니다.' })
       }
 
+      const displayName = userRow.name || userRow.email.split('@')[0]
+      const token = await createSession(sql, userRow.id, userRow.email)
+      setSessionCookie(req, res, token, SESSION_TTL_SECONDS)
+
       return res.status(200).json({
         ok: true,
-        user: { email: userRow.email, name: userRow.name || userRow.email.split('@')[0] },
+        user: { id: userRow.id, email: userRow.email, name: displayName },
+        token,
         message: '로그인되었습니다.',
       })
     } catch (err: any) {
@@ -190,23 +305,42 @@ export default async function handler(req: any, res: any) {
     }
   }
 
-  // 4. Save Travel Plan
-  if (action === 'save_plan' && req.method === 'POST') {
-    const { userEmail, regionId, flightId, transportId, ryokanId, pricePlan, extraBudget, notes } =
-      req.body || {}
-
-    if (!userEmail) {
-      return res.status(400).json({ ok: false, error: '로그인 사용자 정보가 필요합니다.' })
-    }
-
-    const cleanEmail = String(userEmail).trim().toLowerCase()
-
+  // 5. Logout
+  if (action === 'logout' && req.method === 'POST') {
     try {
+      const token = extractSessionToken(req)
+      if (token) {
+        await sql`DELETE FROM travel_sessions WHERE token = ${token}`
+      }
+      setSessionCookie(req, res, '', 0)
+      return res.status(200).json({ ok: true, message: '로그아웃되었습니다.' })
+    } catch (err: any) {
+      return res.status(500).json({ ok: false, error: '로그아웃 실패: ' + err.message })
+    }
+  }
+
+  // 6. Save Travel Plan (Authenticated)
+  if (action === 'save_plan' && req.method === 'POST') {
+    try {
+      const authedUser = await getAuthenticatedUser(sql, req)
+      if (!authedUser) {
+        return res.status(401).json({ ok: false, error: '로그인이 필요합니다. 다시 로그인해주세요.' })
+      }
+
+      const body = req.body || {}
+      const regionVal = body.region_id ?? body.regionId ?? 'beppu-yufuin'
+      const flightVal = body.flight_id ?? body.flightId ?? '7c-oit-direct'
+      const transportVal = body.transport_id ?? body.transportId ?? 'oit-limousine-express-train'
+      const ryokanVal = body.ryokan_id ?? body.ryokanId ?? 'yufuin-sansuikan|beppu-onyado-nono'
+      const pricePlanVal = body.price_plan ?? body.pricePlan ?? 'confirmed'
+      const extraBudgetVal = Number(body.extra_budget ?? body.extraBudget) || 650000
+      const notesVal = body.notes || ''
+
       await sql`
         INSERT INTO travel_saved_plans (
           user_email, region_id, flight_id, transport_id, ryokan_id, price_plan, extra_budget, notes
         ) VALUES (
-          ${cleanEmail}, ${regionId}, ${flightId}, ${transportId}, ${ryokanId}, ${pricePlan}, ${extraBudget || 650000}, ${notes || ''}
+          ${authedUser.email}, ${regionVal}, ${flightVal}, ${transportVal}, ${ryokanVal}, ${pricePlanVal}, ${extraBudgetVal}, ${notesVal}
         )
       `
       return res.status(200).json({
@@ -218,19 +352,17 @@ export default async function handler(req: any, res: any) {
     }
   }
 
-  // 5. Get Saved Travel Plan
+  // 7. Get Saved Travel Plan (Authenticated)
   if (action === 'get_plan' && req.method === 'GET') {
-    const { email } = req.query || {}
-    if (!email) {
-      return res.status(400).json({ ok: false, error: '조회할 email 파라미터가 필요합니다.' })
-    }
-
-    const cleanEmail = String(email).trim().toLowerCase()
-
     try {
+      const authedUser = await getAuthenticatedUser(sql, req)
+      if (!authedUser) {
+        return res.status(401).json({ ok: false, error: '로그인이 필요합니다.' })
+      }
+
       const rows = await sql`
         SELECT * FROM travel_saved_plans
-        WHERE user_email = ${cleanEmail}
+        WHERE user_email = ${authedUser.email}
         ORDER BY updated_at DESC
         LIMIT 1
       `

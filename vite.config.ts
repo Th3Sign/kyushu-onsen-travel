@@ -25,7 +25,10 @@ export default defineConfig({
             setHeader: (k: string, v: string) => res.setHeader(k, v),
             status: (code: number) => ({
               json: (data: any) => sendJson(code, data),
-              end: () => res.end(),
+              end: () => {
+                res.statusCode = code
+                res.end()
+              },
             }),
           }
 

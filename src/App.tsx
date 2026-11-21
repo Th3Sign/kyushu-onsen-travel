@@ -12,7 +12,6 @@ import {
   CONFIRMED_TRANSIT_COST,
   BABY_CHECKLIST,
   OTA_BOOKING_GUIDE,
-  PricePlanType,
   RyokanOption,
 } from './data/travelData'
 import { DynamicRouteMap } from './components/DynamicRouteMap'
@@ -29,45 +28,28 @@ const SHADER_MOOD_META: {
   { id: 'beppu-steam', label: 'Beppu Steam (2박)' },
 ]
 
-const PRICE_PLAN_OPTIONS: {
-  id: PricePlanType
-  shortLabel: string
-  fullLabel: string
-  subNote: string
-}[] = [
-  {
-    id: 'ota-breakfast',
-    shortLabel: 'OTA 특가 (조식포함)',
-    fullLabel: '아고다·트립닷컴·공홈 프로모션가 (조식 포함 · 석식 자유)',
-    subNote: '온야도 노노 벳푸는 조식포함 + 벳푸역 맛집 조합 시 최고 가성비 (성인 3인 1실 합산)',
-  },
-  {
-    id: 'ota-halfboard',
-    shortLabel: 'OTA 특가 (조·석식 2식)',
-    fullLabel: '아고다·라쿠텐·자란 쿠폰 특가 (석식 + 조식 2식 포함)',
-    subNote: '유후인 산스이칸(올인클루시브 와규 뷔페) 1박 기준 추천 플랜 (성인 3인 1실 합산)',
-  },
-  {
-    id: 'rack-rate',
-    shortLabel: '공식 정가 (조·석식 2식)',
-    fullLabel: '숙소 공식 홈페이지 기준가 (조·석식 2식 포함)',
-    subNote: '할인 전 기준 요금',
-  },
-]
-
-function getRyokanNightKRW(r: RyokanOption, plan: PricePlanType): number {
-  if (plan === 'ota-breakfast') return r.otaBreakfastKRW
-  if (plan === 'ota-halfboard') return r.otaHalfBoardKRW
-  return r.pricePerNightKRW
-}
-
-function getRyokanNightJPY(r: RyokanOption, plan: PricePlanType): number {
-  if (plan === 'ota-breakfast') return r.otaBreakfastJPY
-  if (plan === 'ota-halfboard') return r.otaHalfBoardJPY
-  return r.pricePerNightJPY
-}
-
 export function App() {
+  const { user, isCheckingSession } = useAuth()
+
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-screen bg-[#111110] text-[#F6F3EC] flex flex-col items-center justify-center gap-3 px-4">
+        <div className="w-6 h-6 border-2 border-[#E5C89B] border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs sm:text-sm text-[#E5C89B] tracking-wider">
+          Neon DB 로그인 세션 확인 중...
+        </p>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <LoginPage />
+  }
+
+  return <TravelJournal />
+}
+
+function TravelJournal() {
   const { user, dbStatus, savePlan, loadPlan, lastSavedAt, isLoading: isAuthLoading, logout } = useAuth()
   const [saveStatusMsg, setSaveStatusMsg] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [pendingSavedPlan, setPendingSavedPlan] = useState<SavedTravelPlan | null>(null)
@@ -76,7 +58,6 @@ export function App() {
   const [activeDayFilter, setActiveDayFilter] = useState<number | 'all'>('all')
   const [selectedYufuinRyokanId, setSelectedYufuinRyokanId] = useState<string>('yufuin-sansuikan')
   const [selectedBeppuRyokanId, setSelectedBeppuRyokanId] = useState<string>('beppu-onyado-nono')
-  const [pricePlan, setPricePlan] = useState<PricePlanType>('ota-halfboard')
   const [extraFoodAndTicketKRW, setExtraFoodAndTicketKRW] = useState<number>(650000)
 
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({
@@ -112,7 +93,6 @@ export function App() {
         setSelectedYufuinRyokanId(plan.ryokan_id)
       }
     }
-    if (plan.price_plan) setPricePlan(plan.price_plan)
     if (plan.extra_budget) setExtraFoodAndTicketKRW(plan.extra_budget)
     setPendingSavedPlan(null)
     setSaveStatusMsg({ text: '저장된 확정 플랜 설정을 불러왔습니다.', type: 'success' })
@@ -127,7 +107,7 @@ export function App() {
       flight_id: CONFIRMED_FLIGHT.id,
       transport_id: 'oit-limousine-express-train',
       ryokan_id: `${selectedYufuinRyokanId}|${selectedBeppuRyokanId}`,
-      price_plan: pricePlan,
+      price_plan: 'ota-halfboard',
       extra_budget: extraFoodAndTicketKRW,
       notes: `오이타 직항 확정: 유후인 1박(${selectedYufuinRyokan.name}) + 벳푸 2박(${selectedBeppuRyokan.name})`,
     })
@@ -150,14 +130,14 @@ export function App() {
     [selectedBeppuRyokanId]
   )
 
-  const yufuin1NightKRW = getRyokanNightKRW(selectedYufuinRyokan, pricePlan)
-  const beppu1NightKRW = getRyokanNightKRW(selectedBeppuRyokan, pricePlan)
+  // 확정 숙소 단일 기준 예상 요금 (산스이칸: 2식 올인클루시브 / 온야도 노노: 조식포함)
+  const yufuin1NightKRW = selectedYufuinRyokan.otaHalfBoardKRW
+  const yufuin1NightJPY = selectedYufuinRyokan.otaHalfBoardJPY
+  const beppu1NightKRW = selectedBeppuRyokan.otaBreakfastKRW
+  const beppu1NightJPY = selectedBeppuRyokan.otaBreakfastJPY
   const beppu2NightsKRW = beppu1NightKRW * 2
 
   const totalStay3NightsKRW = yufuin1NightKRW + beppu2NightsKRW
-  const rackStay3NightsKRW =
-    selectedYufuinRyokan.pricePerNightKRW + selectedBeppuRyokan.pricePerNightKRW * 2
-  const savedOnStayKRW = Math.max(0, rackStay3NightsKRW - totalStay3NightsKRW)
 
   const totalBudgetKRW =
     CONFIRMED_FLIGHT.total3Adults1InfantKRW +
@@ -171,7 +151,7 @@ export function App() {
   }
 
   if (!user) {
-    return <LoginPage />
+    return null
   }
 
   const renderRyokanCard = (
@@ -182,30 +162,15 @@ export function App() {
     nightsCount: number,
     bannerMood: 'yufuin-fukuoka' | 'beppu-yufuin'
   ) => {
-    const currentNightKRW = getRyokanNightKRW(r, pricePlan)
-    const currentNightJPY = getRyokanNightJPY(r, pricePlan)
+    const isYufuin = r.stayZone === 'yufuin-1n'
+    const currentNightKRW = isYufuin ? r.otaHalfBoardKRW : r.otaBreakfastKRW
+    const currentNightJPY = isYufuin ? r.otaHalfBoardJPY : r.otaBreakfastJPY
+    const stayPlanLabel = isYufuin ? '2식 올인클루시브 기준' : '조식 포함 기준'
     const totalZoneKRW = currentNightKRW * nightsCount
-    const discountPercent = Math.round(
-      ((r.pricePerNightKRW - currentNightKRW) / r.pricePerNightKRW) * 100
-    )
 
-    const googleHotelsUrl = `https://www.google.com/travel/search?q=${encodeURIComponent(
+    const googleMapsPlaceUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
       r.enSearchQuery + ' ' + r.jpName
     )}`
-    const agodaSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(
-      'site:agoda.com ' + r.enSearchQuery + ' ' + r.name
-    )}`
-    const tripComSearchUrl = `https://kr.trip.com/hotels/list?keyword=${encodeURIComponent(
-      r.enSearchQuery
-    )}`
-    const rakutenSearchUrl = r.rakutenHotelNo
-      ? `https://travel.rakuten.co.jp/HOTEL/${r.rakutenHotelNo}/${r.rakutenHotelNo}.html`
-      : `https://www.google.com/search?q=${encodeURIComponent(
-          'site:travel.rakuten.co.jp ' + r.enSearchQuery + ' ' + r.jpName
-        )}`
-    const jalanDirectUrl = r.jalanYadNo
-      ? `https://www.jalan.net/${r.jalanYadNo}/`
-      : `https://www.google.com/search?q=${encodeURIComponent('site:jalan.net ' + r.jpName)}`
 
     return (
       <div
@@ -268,58 +233,6 @@ export function App() {
                 </p>
               ))}
             </div>
-
-            {/* 3-Tier Price Comparison Mini Table */}
-            <div className="border-t border-[#191816] pt-3 space-y-1.5 text-xs">
-              <div className="text-[11px] uppercase tracking-wider text-[#78736A] mb-2">
-                성인 3인 + 아기 1인 · 1박 기준 합산 요금 비교
-              </div>
-              <div
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onSelect()
-                  setPricePlan('ota-breakfast')
-                }}
-                className={`flex justify-between py-1 px-2 transition ${
-                  pricePlan === 'ota-breakfast'
-                    ? 'bg-[#191816] text-[#F6F3EC] font-medium'
-                    : 'text-[#4A4742] hover:bg-[#E5DFD2]'
-                }`}
-              >
-                <span>아고다·트립닷컴 (조식포함)</span>
-                <span className="tabular-nums">{r.otaBreakfastKRW.toLocaleString()}원/박</span>
-              </div>
-              <div
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onSelect()
-                  setPricePlan('ota-halfboard')
-                }}
-                className={`flex justify-between py-1 px-2 transition ${
-                  pricePlan === 'ota-halfboard'
-                    ? 'bg-[#191816] text-[#F6F3EC] font-medium'
-                    : 'text-[#4A4742] hover:bg-[#E5DFD2]'
-                }`}
-              >
-                <span>아고다·라쿠텐 (석식+조식 2식)</span>
-                <span className="tabular-nums">{r.otaHalfBoardKRW.toLocaleString()}원/박</span>
-              </div>
-              <div
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onSelect()
-                  setPricePlan('rack-rate')
-                }}
-                className={`flex justify-between py-1 px-2 transition ${
-                  pricePlan === 'rack-rate'
-                    ? 'bg-[#191816] text-[#F6F3EC] font-medium'
-                    : 'text-[#78736A] line-through hover:bg-[#E5DFD2]'
-                }`}
-              >
-                <span>공식 정가 (석식+조식 2식)</span>
-                <span className="tabular-nums">{r.pricePerNightKRW.toLocaleString()}원/박</span>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -329,13 +242,8 @@ export function App() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-semibold text-[#191816]">
-                  {nightsCount}박 합계 ({nightsCount === 1 ? 'Day 1 유후인' : 'Day 2~3 벳푸 연박'})
+                  {nightsCount}박 합계 ({stayPlanLabel})
                 </span>
-                {discountPercent > 0 && (
-                  <span className="text-[11px] font-semibold text-[#8C5A3C]">
-                    (-{discountPercent}%)
-                  </span>
-                )}
               </div>
               <div className="text-lg font-bold text-[#191816] tabular-nums mt-0.5">
                 {totalZoneKRW.toLocaleString()}원{' '}
@@ -354,64 +262,29 @@ export function App() {
           </div>
 
           <div
-            className="pt-3 border-t border-[#DFD9CE] space-y-1.5"
+            className="pt-3 border-t border-[#DFD9CE] grid grid-cols-2 gap-2 text-[11px]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-[10px] tracking-wider uppercase text-[#78736A]">
-              실시간 최저가 조회 바로가기 (성인 3인 기준 검색 권장)
-            </div>
-            <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+            {r.officialUrl && (
               <a
-                href={googleHotelsUrl}
+                href={r.officialUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="col-span-2 py-2 px-2 text-center border border-[#191816] bg-[#191816] text-[#F6F3EC] hover:bg-[#33312E] transition font-medium"
+                className="py-2 px-2 text-center border border-[#191816] bg-[#191816] text-[#F6F3EC] hover:bg-[#33312E] transition font-medium"
               >
-                Google 호텔 최저가 비교 ↗
+                공식 홈페이지 안내 ↗
               </a>
-              <a
-                href={jalanDirectUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="py-1.5 px-2 text-center border border-[#8C5A3C] bg-[#FAF6EE] text-[#8C5A3C] hover:bg-[#8C5A3C] hover:text-white transition font-semibold"
-              >
-                자란넷(Jalan) 직결 ↗
-              </a>
-              <a
-                href={rakutenSearchUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="py-1.5 px-2 text-center border border-[#8C5A3C] bg-[#FAF6EE] text-[#8C5A3C] hover:bg-[#8C5A3C] hover:text-white transition font-semibold"
-              >
-                라쿠텐(Rakuten) ↗
-              </a>
-              <a
-                href={agodaSearchUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="py-1.5 px-2 text-center border border-[#C8C1B4] bg-[#FAF8F4] text-[#191816] hover:border-[#191816] transition"
-              >
-                Agoda ↗
-              </a>
-              <a
-                href={tripComSearchUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="py-1.5 px-2 text-center border border-[#C8C1B4] bg-[#FAF8F4] text-[#191816] hover:border-[#191816] transition"
-              >
-                Trip.com ↗
-              </a>
-              {r.officialUrl && (
-                <a
-                  href={r.officialUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="col-span-2 py-1.5 px-2 text-center border border-[#C8C1B4] bg-white text-[#191816] hover:border-[#191816] transition font-medium"
-                >
-                  공식 홈페이지 공실 캘린더 ↗
-                </a>
-              )}
-            </div>
+            )}
+            <a
+              href={googleMapsPlaceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${
+                r.officialUrl ? '' : 'col-span-2'
+              } py-2 px-2 text-center border border-[#8C5A3C] bg-[#FAF6EE] text-[#8C5A3C] hover:bg-[#8C5A3C] hover:text-white transition font-semibold`}
+            >
+              Google 지도 위치 보기 ↗
+            </a>
           </div>
         </div>
       </div>
@@ -974,7 +847,7 @@ export function App() {
               [확정 숙소] 유후인 산스이칸(1박) + 온야도 노노 벳푸(2박)
             </h2>
             <p className="text-sm text-[#5C5852]">
-              확정된 두 숙소의 <strong>역세권 동선·짐보관·온천 설비·아기 케어 포인트</strong>를 한눈에 확인하고, 예약하신 식사 플랜(조식포함 / 조·석식 2식)에 맞춰 총 예산을 바로 산출해 보세요.
+              확정된 두 숙소의 <strong>역세권 동선·짐보관·온천 설비·아기 케어 포인트</strong>를 한눈에 확인해 보세요.
             </p>
           </div>
 
@@ -1031,40 +904,6 @@ export function App() {
                 </ul>
               </div>
             </div>
-          </div>
-
-          {/* Price Plan Switcher */}
-          <div className="border-y border-[#191816] bg-[#EFECE4] grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#D8D1C5]">
-            {PRICE_PLAN_OPTIONS.map((plan) => {
-              const active = pricePlan === plan.id
-              return (
-                <button
-                  key={plan.id}
-                  onClick={() => setPricePlan(plan.id)}
-                  className={`p-4 sm:p-5 text-left transition cursor-pointer flex flex-col justify-between ${
-                    active ? 'bg-[#191816] text-[#F6F3EC]' : 'hover:bg-[#E5DFD2] text-[#191816]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span
-                      className={`text-xs tracking-wider uppercase font-semibold ${
-                        active ? 'text-[#E5C89B]' : 'text-[#8C5A3C]'
-                      }`}
-                    >
-                      {plan.shortLabel}
-                    </span>
-                    <span className="font-editorial text-sm">{active ? '● 적용중' : '○ 선택'}</span>
-                  </div>
-                  <div
-                    className={`text-xs mt-2 leading-relaxed ${
-                      active ? 'text-white/75' : 'text-[#5C5852]'
-                    }`}
-                  >
-                    {plan.subNote}
-                  </div>
-                </button>
-              )
-            })}
           </div>
 
           {/* CONFIRMED 2 STAYS SIDE-BY-SIDE */}
@@ -1234,44 +1073,6 @@ export function App() {
                 <span className="text-xs text-white/60">성인 3 · 유아 1</span>
               </div>
 
-              <div className="space-y-2">
-                <div className="text-[11px] uppercase tracking-wider text-white/60">
-                  숙박 요금 플랜 선택 (클릭 시 즉시 반영)
-                </div>
-                <div className="grid grid-cols-3 gap-1.5 text-[11px]">
-                  <button
-                    onClick={() => setPricePlan('ota-breakfast')}
-                    className={`py-2 px-1 text-center border transition cursor-pointer ${
-                      pricePlan === 'ota-breakfast'
-                        ? 'border-[#E5C89B] bg-[#E5C89B] text-[#191816] font-semibold'
-                        : 'border-white/20 text-white/70 hover:text-white'
-                    }`}
-                  >
-                    아고다 조식
-                  </button>
-                  <button
-                    onClick={() => setPricePlan('ota-halfboard')}
-                    className={`py-2 px-1 text-center border transition cursor-pointer ${
-                      pricePlan === 'ota-halfboard'
-                        ? 'border-[#E5C89B] bg-[#E5C89B] text-[#191816] font-semibold'
-                        : 'border-white/20 text-white/70 hover:text-white'
-                    }`}
-                  >
-                    아고다 2식
-                  </button>
-                  <button
-                    onClick={() => setPricePlan('rack-rate')}
-                    className={`py-2 px-1 text-center border transition cursor-pointer ${
-                      pricePlan === 'rack-rate'
-                        ? 'border-[#E5C89B] bg-[#E5C89B] text-[#191816] font-semibold'
-                        : 'border-white/20 text-white/70 hover:text-white'
-                    }`}
-                  >
-                    공식 정가
-                  </button>
-                </div>
-              </div>
-
               <div className="space-y-4 text-xs sm:text-sm divide-y divide-white/10">
                 <div className="pt-2 flex justify-between items-start gap-3">
                   <div>
@@ -1292,26 +1093,24 @@ export function App() {
                 <div className="pt-4 flex justify-between items-start gap-3">
                   <div>
                     <div className="text-white font-medium">
-                      02. 유후인 1박 + 벳푸 2박 숙박 합산
+                      02. 유후인 1박 + 벳푸 2박 확정 숙박 합산
                     </div>
                     <div className="text-xs text-white/80 mt-1 space-y-1">
                       <div>
-                        • <strong>[유후인 1박]</strong> {selectedYufuinRyokan.name.split(' (')[0]}:{' '}
-                        <span className="text-[#E5C89B]">{yufuin1NightKRW.toLocaleString()}원</span>
+                        • <strong>[유후인 1박]</strong> {selectedYufuinRyokan.name.split(' (')[0]} (2식 올인클루시브):{' '}
+                        <span className="text-[#E5C89B]">{yufuin1NightKRW.toLocaleString()}원</span>{' '}
+                        <span className="text-white/50 text-[11px]">(¥{yufuin1NightJPY.toLocaleString()})</span>
                       </div>
                       <div>
-                        • <strong>[벳푸 2박]</strong> {selectedBeppuRyokan.name.split(' (')[0]}:{' '}
+                        • <strong>[벳푸 2박]</strong> {selectedBeppuRyokan.name.split(' (')[0]} (조식 포함):{' '}
                         <span className="text-[#E5C89B]">
                           {beppu2NightsKRW.toLocaleString()}원
                         </span>{' '}
-                        ({beppu1NightKRW.toLocaleString()}×2박)
+                        <span className="text-white/50 text-[11px]">
+                          ({beppu1NightKRW.toLocaleString()} / ¥{beppu1NightJPY.toLocaleString()}×2박)
+                        </span>
                       </div>
                     </div>
-                    {savedOnStayKRW > 0 && (
-                      <div className="text-[11px] text-emerald-300 mt-1.5">
-                        → 공식 정가 대비 총 {savedOnStayKRW.toLocaleString()}원 절감!
-                      </div>
-                    )}
                   </div>
                   <div className="tabular-nums font-medium text-white whitespace-nowrap">
                     {totalStay3NightsKRW.toLocaleString()}원

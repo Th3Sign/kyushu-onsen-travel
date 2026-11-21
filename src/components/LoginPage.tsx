@@ -76,7 +76,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         {/* Left Editorial Overview */}
         <div className="lg:col-span-7 space-y-4 sm:space-y-6">
           <div className="inline-block px-3 py-1 bg-[#E5C89B]/15 text-[#E5C89B] border border-[#E5C89B]/30 text-xs tracking-[0.15em] uppercase font-medium">
-            Private Access · 회원 전용 열람
+            Neon DB 회원 전용 · 로그인 후 확정 여행 일정 열람
           </div>
           <h1 className="font-serif-kr text-2xl sm:text-4xl lg:text-5xl font-normal leading-tight text-white">
             열세 달 아기와 어른 셋이 떠나는
