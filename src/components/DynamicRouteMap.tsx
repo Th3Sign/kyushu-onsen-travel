@@ -26,7 +26,7 @@ export const DynamicRouteMap: React.FC = () => {
             </span>
           </div>
           <h3 className="font-serif-kr text-xl sm:text-2xl font-medium text-[#191816]">
-            🚌 오이타공항 리무진(55분) ➔ 🚆 JR 특급열차(65분) ➔ 🚕 벳푸 택시 ➔ 🚌 에어라이너(45분)
+            🚌 오이타공항 리무진(55분) ➔ 🚆 JR 특급열차(65분) ➔ 🚕 벳푸역 도보 1분·택시 ➔ 🚌 에어라이너(50분)
           </h3>
           <p className="text-xs sm:text-sm text-[#5C5852]">
             성인 3명 + 13개월 유아 1명 + 28인치 캐리어 3개 + 휴대용 유모차 1대 기준 구간별 탑승 시각표·승강장·수하물 처리 완벽 가이드

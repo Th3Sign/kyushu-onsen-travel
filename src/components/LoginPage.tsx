@@ -84,19 +84,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             <span className="text-[#E5C89B]">규슈 온천 여정 노트</span>
           </h1>
           <p className="text-xs sm:text-base text-white/75 font-light leading-relaxed max-w-lg">
-            크리스마스 인파 전 12월 셋째 주, 짧은 비행과 온천 수질, 침대 낙상 방지 화양실, 
-            그리고 렌터카·점보택시·신칸센 실시간 경로까지.
-            로그인하시면 맞춤 여정 설계와 Neon DB 플랜 저장 기능을 이용하실 수 있습니다.
+            크리스마스 인파 전 12월 셋째 주, 제주항공 오이타 직항과 확정 숙소(유후인 산스이칸 · 온야도 노노 벳푸)에 맞춘 최종 여정.
+            공항 리무진·JR 특급열차·벳푸역 도보 1분 동선까지 로그인 후 바로 확인하고 Neon DB에 저장할 수 있습니다.
           </p>
 
           <div className="pt-2 grid grid-cols-3 gap-3 border-t border-white/15 text-xs text-white/70">
             <div>
-              <div className="font-editorial text-[#E5C89B] text-base">01. 3 Regions</div>
-              <div className="text-[11px] text-white/50 mt-0.5">벳푸 · 우레시노 · 유후인</div>
+              <div className="font-editorial text-[#E5C89B] text-base">01. Confirmed Stays</div>
+              <div className="text-[11px] text-white/50 mt-0.5">산스이칸 1박 · 온야도 노노 2박</div>
             </div>
             <div>
               <div className="font-editorial text-[#E5C89B] text-base">02. Routes</div>
-              <div className="text-[11px] text-white/50 mt-0.5">교통수단별 실시간 동선</div>
+              <div className="text-[11px] text-white/50 mt-0.5">리무진·특급열차·역세권 동선</div>
             </div>
             <div>
               <div className="font-editorial text-[#E5C89B] text-base">03. Folio</div>

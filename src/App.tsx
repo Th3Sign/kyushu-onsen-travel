@@ -37,20 +37,20 @@ const PRICE_PLAN_OPTIONS: {
 }[] = [
   {
     id: 'ota-breakfast',
-    shortLabel: '아고다·트립닷컴 특가 (조식포함)',
-    fullLabel: '아고다·트립닷컴 프로모션가 (조식 포함 · 석식 자유)',
-    subNote: '플랫폼에서 가장 흔히 보이는 26~43만 원대 요금 (성인 3인 1실 합산)',
+    shortLabel: 'OTA 특가 (조식포함)',
+    fullLabel: '아고다·트립닷컴·공홈 프로모션가 (조식 포함 · 석식 자유)',
+    subNote: '온야도 노노 벳푸는 조식포함 + 벳푸역 맛집 조합 시 최고 가성비 (성인 3인 1실 합산)',
   },
   {
     id: 'ota-halfboard',
-    shortLabel: '아고다·라쿠텐 특가 (조·석식 2식)',
-    fullLabel: '아고다·라쿠텐·자란 쿠폰 특가 (가이세키/뷔페 석식 + 조식 포함)',
-    subNote: '정가 대비 25~30% 할인된 조·석식 2식 포함 실결제가 (성인 3인 1실 합산)',
+    shortLabel: 'OTA 특가 (조·석식 2식)',
+    fullLabel: '아고다·라쿠텐·자란 쿠폰 특가 (석식 + 조식 2식 포함)',
+    subNote: '유후인 산스이칸(올인클루시브 와규 뷔페) 1박 기준 추천 플랜 (성인 3인 1실 합산)',
   },
   {
     id: 'rack-rate',
     shortLabel: '공식 정가 (조·석식 2식)',
-    fullLabel: '료칸 공식 홈페이지 정가 (가이세키 석식 + 조식 포함)',
+    fullLabel: '숙소 공식 홈페이지 기준가 (조·석식 2식 포함)',
     subNote: '할인 전 기준 요금',
   },
 ]
@@ -74,15 +74,15 @@ export function App() {
 
   const [shaderMood, setShaderMood] = useState<OnsenShaderMood>('hinoki-wgsl')
   const [activeDayFilter, setActiveDayFilter] = useState<number | 'all'>('all')
-  const [selectedYufuinRyokanId, setSelectedYufuinRyokanId] = useState<string>('yufuin-yufuintei')
-  const [selectedBeppuRyokanId, setSelectedBeppuRyokanId] = useState<string>('seikai-p')
+  const [selectedYufuinRyokanId, setSelectedYufuinRyokanId] = useState<string>('yufuin-sansuikan')
+  const [selectedBeppuRyokanId, setSelectedBeppuRyokanId] = useState<string>('beppu-onyado-nono')
   const [pricePlan, setPricePlan] = useState<PricePlanType>('ota-halfboard')
   const [extraFoodAndTicketKRW, setExtraFoodAndTicketKRW] = useState<number>(650000)
 
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({
     'quarantine-meat': true,
     'transit-limousine-train': true,
-    'transit-chikki-luggage': true,
+    'stay-onsen-luggage-flow': true,
     'onsen-temp': true,
   })
 
@@ -104,8 +104,8 @@ export function App() {
     if (plan.ryokan_id) {
       if (plan.ryokan_id.includes('|')) {
         const [yId, bId] = plan.ryokan_id.split('|')
-        if (yId) setSelectedYufuinRyokanId(yId)
-        if (bId) setSelectedBeppuRyokanId(bId)
+        if (yId && YUFUIN_RYOKANS.some((r) => r.id === yId)) setSelectedYufuinRyokanId(yId)
+        if (bId && BEPPU_RYOKANS.some((r) => r.id === bId)) setSelectedBeppuRyokanId(bId)
       } else if (BEPPU_RYOKANS.some((r) => r.id === plan.ryokan_id)) {
         setSelectedBeppuRyokanId(plan.ryokan_id)
       } else if (YUFUIN_RYOKANS.some((r) => r.id === plan.ryokan_id)) {
@@ -198,9 +198,14 @@ export function App() {
     const tripComSearchUrl = `https://kr.trip.com/hotels/list?keyword=${encodeURIComponent(
       r.enSearchQuery
     )}`
-    const rakutenSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(
-      'site:travel.rakuten.com ' + r.enSearchQuery + ' ' + r.jpName
-    )}`
+    const rakutenSearchUrl = r.rakutenHotelNo
+      ? `https://travel.rakuten.co.jp/HOTEL/${r.rakutenHotelNo}/${r.rakutenHotelNo}.html`
+      : `https://www.google.com/search?q=${encodeURIComponent(
+          'site:travel.rakuten.co.jp ' + r.enSearchQuery + ' ' + r.jpName
+        )}`
+    const jalanDirectUrl = r.jalanYadNo
+      ? `https://www.jalan.net/${r.jalanYadNo}/`
+      : `https://www.google.com/search?q=${encodeURIComponent('site:jalan.net ' + r.jpName)}`
 
     return (
       <div
@@ -215,12 +220,18 @@ export function App() {
         <div>
           <DestinationShaderBanner regionId={bannerMood} />
           <div className="p-5 sm:p-6 space-y-4">
-            <div className="flex items-center justify-between gap-2 text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
               <span className="px-2 py-0.5 bg-[#191816] text-[#E5C89B] font-semibold">
                 {stayLabel}
               </span>
               <span className="text-[#8C5A3C] font-medium">{r.jpName}</span>
             </div>
+
+            {r.planPriorityBadge && (
+              <div className="px-2.5 py-1 bg-[#FAF6EE] border border-[#D9C6A3] text-[11px] font-semibold text-[#8C5A3C]">
+                🎯 {r.planPriorityBadge}
+              </div>
+            )}
 
             <div>
               <h4 className="font-serif-kr text-lg font-semibold text-[#191816]">{r.name}</h4>
@@ -338,7 +349,7 @@ export function App() {
                 active ? 'bg-[#191816] text-[#E5C89B]' : 'border border-[#191816] text-[#191816]'
               }`}
             >
-              {active ? '선택됨 ●' : '선택 ○'}
+              {active ? '예약 확정 ✅' : '선택 ○'}
             </span>
           </div>
 
@@ -359,6 +370,22 @@ export function App() {
                 Google 호텔 최저가 비교 ↗
               </a>
               <a
+                href={jalanDirectUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-1.5 px-2 text-center border border-[#8C5A3C] bg-[#FAF6EE] text-[#8C5A3C] hover:bg-[#8C5A3C] hover:text-white transition font-semibold"
+              >
+                자란넷(Jalan) 직결 ↗
+              </a>
+              <a
+                href={rakutenSearchUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-1.5 px-2 text-center border border-[#8C5A3C] bg-[#FAF6EE] text-[#8C5A3C] hover:bg-[#8C5A3C] hover:text-white transition font-semibold"
+              >
+                라쿠텐(Rakuten) ↗
+              </a>
+              <a
                 href={agodaSearchUrl}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -374,14 +401,16 @@ export function App() {
               >
                 Trip.com ↗
               </a>
-              <a
-                href={rakutenSearchUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="col-span-2 py-1.5 px-2 text-center border border-[#C8C1B4] bg-[#FAF8F4] text-[#191816] hover:border-[#191816] transition"
-              >
-                Rakuten Travel (화양실 재고 최다) ↗
-              </a>
+              {r.officialUrl && (
+                <a
+                  href={r.officialUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="col-span-2 py-1.5 px-2 text-center border border-[#C8C1B4] bg-white text-[#191816] hover:border-[#191816] transition font-medium"
+                >
+                  공식 홈페이지 공실 캘린더 ↗
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -523,20 +552,20 @@ export function App() {
         {/* Center Title */}
         <div className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-10 my-auto py-10 sm:py-14 pointer-events-none">
           <div className="inline-flex flex-wrap items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-xs border border-white/20 text-[11px] sm:text-xs text-[#E5C89B] mb-4">
-            <span>✅ 제주항공 오이타 직항 예매 완료</span>
+            <span>✅ 제주항공 오이타 직항</span>
             <span>·</span>
-            <span>🚌 공항리무진 (오이타→유후인)</span>
+            <span>♨️ 유후인 산스이칸 (1박 확정)</span>
             <span>·</span>
-            <span>🚆 JR 특급열차 (유후인→벳푸)</span>
+            <span>♨️ 온야도 노노 벳푸 (2박 확정)</span>
           </div>
           <h1 className="font-serif-kr text-2xl sm:text-4xl lg:text-[48px] font-normal leading-[1.3] text-white max-w-4xl">
-            오이타 공항 ➔ 유후인 1박 ➔ 벳푸 2박
+            유후인 산스이칸 1박 ➔ 온야도 노노 벳푸 2박
             <br />
-            성인 3인 · 13개월 아기 맞춤 확정 여정표
+            성인 3인 · 13개월 아기 최종 확정 여정표
           </h1>
           <p className="mt-4 sm:mt-5 text-xs sm:text-base text-white/85 max-w-2xl leading-relaxed font-light">
-            렌터카 없이 공항 리무진 버스와 JR 특급열차로 가장 편안하게 이동하는 3박 4일 실전 가이드.
-            탑승 시각표, 유후인 치키 짐 배송, 무환승 직통 열차, 벳푸 2박 연박 동선만 세밀하게 담았습니다.
+            유후인역 도보 8분「산스이칸」과 벳푸역 도보 1분「온야도 노노」숙소 확정에 맞춰 전면 재설계한
+            3박 4일 실전 마스터북. 역세권 무료 짐보관, 13층 전세 가족탕 7개, 직통 특급열차 동선까지 빈틈없이 담았습니다.
           </p>
         </div>
 
@@ -556,7 +585,7 @@ export function App() {
                 Confirmed Stay
               </div>
               <div className="text-xs sm:text-sm font-medium text-white mt-0.5">
-                유후인 1박 + 벳푸 2박 연박
+                산스이칸(1박) + 온야도 노노(2박)
               </div>
             </div>
             <div className="py-3 sm:py-4 pr-3 sm:px-6">
@@ -564,7 +593,7 @@ export function App() {
                 Confirmed Transit
               </div>
               <div className="text-xs sm:text-sm font-medium text-white mt-0.5 truncate">
-                공항리무진 + JR 특급열차 + 택시
+                공항리무진 + JR 특급 + 역세권 도보
               </div>
             </div>
             <div className="py-3 sm:py-4 pl-3 sm:pl-6">
@@ -590,7 +619,7 @@ export function App() {
           <div className="flex items-center gap-2 shrink-0">
             <span className="w-2 h-2 rounded-full bg-[#8C5A3C]" />
             <span className="text-xs sm:text-sm font-serif-kr font-semibold text-[#191816]">
-              확정 코스: 오이타공항 ➔ 유후인(1박) ➔ 벳푸(2박)
+              확정 코스: 오이타 ➔ 산스이칸(1박) ➔ 온야도 노노(2박)
             </span>
           </div>
 
@@ -602,7 +631,7 @@ export function App() {
               02 3박 4일 상세 일정표
             </a>
             <a href="#chapter-ryokan" className="hover:text-[#191816] transition">
-              03 유후인(1박)·벳푸(2박) 숙소
+              03 확정 숙소 2곳 완벽 가이드
             </a>
             <a href="#chapter-folio" className="hover:text-[#191816] transition">
               04 확정 견적·체크리스트
@@ -671,7 +700,7 @@ export function App() {
                   13:55 오이타 출발 ➔ 15:50 인천(T1) 도착
                 </div>
                 <p className="text-xs text-[#5C5852]">
-                  • 10:35경 벳푸(키타하마/롯카세이)에서 에어라이너 리무진 탑승 ➔ 11:25 오이타공항 도착
+                  • 10:05경 벳푸역 앞([B]노선, 도보 1분) 또는 10:20 키타하마(전 노선) 에어라이너 탑승 ➔ 11:03~11:10 공항 도착
                   <br />• 공항 국내선 2층 식당가 점심 & 1층 무료 온천 족욕탕 체험 후 여유롭게 출국
                 </p>
               </div>
@@ -713,12 +742,12 @@ export function App() {
                   Chapter 02 — Day-by-Day Schedule
                 </div>
                 <h2 className="font-serif-kr text-2xl sm:text-3xl font-normal text-[#191816] leading-snug">
-                  유후인 1박 + 벳푸 2박
+                  산스이칸 1박 + 온야도 노노 2박
                   <br />
                   분 단위 실전 타임라인
                 </h2>
                 <p className="text-xs sm:text-sm text-[#5C5852] leading-relaxed">
-                  오이타 공항 리무진과 JR 특급열차 실제 출발 시각, 캐리어 보관 시점, 13개월 아기 낮잠 및 어른 3인 교대 휴식 시간을 맞춘 일정표입니다.
+                  오이타 공항 리무진과 JR 특급열차 실제 출발 시각, 역세권 무료 짐보관, 13개월 아기 낮잠 및 어른 3인 교대 온천 시간을 맞춘 최종 일정표입니다.
                 </p>
               </div>
 
@@ -934,19 +963,74 @@ export function App() {
         </section>
 
         {/* ---------------------------------------------------------------
-            CHAPTER 03 — YUFUIN (1N) + BEPPU (2N) RYOKAN SELECTION
+            CHAPTER 03 — CONFIRMED ACCOMMODATIONS GUIDE
            --------------------------------------------------------------- */}
         <section id="chapter-ryokan" className="py-12 sm:py-18 scroll-mt-14 space-y-12">
           <div className="space-y-3">
             <div className="text-xs tracking-[0.2em] uppercase text-[#8C5A3C] font-semibold">
-              Chapter 03 — Yufuin (1 Night) + Beppu (2 Nights) Stay Curation
+              Chapter 03 — Confirmed Accommodations Master Guide
             </div>
             <h2 className="font-serif-kr text-2xl sm:text-3xl font-normal text-[#191816]">
-              [유후인 1박 숙소] + [벳푸 2박 연박 숙소] 맞춤 선택
+              [확정 숙소] 유후인 산스이칸(1박) + 온야도 노노 벳푸(2박)
             </h2>
             <p className="text-sm text-[#5C5852]">
-              공식 홈페이지 정가 대비 25~35% 저렴한 아고다·트립닷컴·라쿠텐 특가를 비교하고, <strong>유후인 1박 숙소</strong>와 <strong>벳푸 2박 숙소</strong>를 각각 선택해 보세요.
+              확정된 두 숙소의 <strong>역세권 동선·짐보관·온천 설비·아기 케어 포인트</strong>를 한눈에 확인하고, 예약하신 식사 플랜(조식포함 / 조·석식 2식)에 맞춰 총 예산을 바로 산출해 보세요.
             </p>
+          </div>
+
+          {/* Confirmed 2 Stays Quick Action Playbook */}
+          <div className="bg-white border-2 border-[#191816] p-5 sm:p-6 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#DFD9CE] pb-3">
+              <div>
+                <div className="text-[11px] tracking-[0.18em] uppercase text-[#8C5A3C] font-bold">
+                  Confirmed Stays Playbook (12/21 ~ 12/24)
+                </div>
+                <h3 className="font-serif-kr text-base sm:text-lg font-semibold text-[#191816] mt-0.5">
+                  ✅ 확정 숙소 2곳 핵심 이용 가이드 (체크인 · 온천 · 아기 케어 · 무료 특전)
+                </h3>
+              </div>
+              <span className="text-xs px-2.5 py-1 bg-[#191816] text-[#E5C89B] font-semibold">
+                성인 3인 + 13개월 유아(소이네)
+              </span>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4 text-xs">
+              <div className="p-4 border border-[#D8D1C5] bg-[#FAF8F4] space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-[#8C5A3C]">Day 1 (12/21 월 · 1박)</span>
+                  <span className="px-2 py-0.5 bg-[#191816] text-[#E5C89B] text-[10px] font-semibold">
+                    예약 확정 ✅
+                  </span>
+                </div>
+                <div className="font-serif-kr text-base font-semibold text-[#191816]">
+                  유후인 산스이칸 (ゆふいん山水館)
+                </div>
+                <ul className="space-y-1 text-[#3D3A35] leading-relaxed">
+                  <li>• <strong>위치·짐:</strong> 유후인역 평지 도보 8분 · 도착 즉시 프런트 무료 짐보관 (도보 2분 맥스밸류 마트)</li>
+                  <li>• <strong>체크인/아웃:</strong> 체크인 15:00~19:00 / 체크아웃 10:00</li>
+                  <li>• <strong>온천 팩트:</strong> 별도 공용 전세 가족탕 없음 → <strong>아기는 객실 욕실 목욕</strong>, 어른은 2:1 교대 노천 대욕장</li>
+                  <li>• <strong>무료 특전:</strong> 라운지 주류·안주(15:00~24:00), 소프트드링크·아이스크림(15:00~10:00), 와규 뷔페 주류 무제한</li>
+                </ul>
+              </div>
+
+              <div className="p-4 border border-[#D8D1C5] bg-[#FAF8F4] space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-[#8C5A3C]">Day 2~3 (12/22 화~24 목 · 2박 연박)</span>
+                  <span className="px-2 py-0.5 bg-[#191816] text-[#E5C89B] text-[10px] font-semibold">
+                    예약 확정 ✅
+                  </span>
+                </div>
+                <div className="font-serif-kr text-base font-semibold text-[#191816]">
+                  온야도 노노 벳푸 (別府八湯 御宿 野乃別府)
+                </div>
+                <ul className="space-y-1 text-[#3D3A35] leading-relaxed">
+                  <li>• <strong>위치·짐:</strong> JR 벳푸역 동쪽 출구 도보 1분 · 하차 직후 무료 짐보관 · 전 관내 맨발 다다미(바퀴 세척)</li>
+                  <li>• <strong>체크인/아웃:</strong> 체크인 15:00 / 체크아웃 11:00 (만 0~2세 소이네 및 조·석식 완전 무료!)</li>
+                  <li>• <strong>온천 팩트:</strong> <strong>13층 무료 전세 가족탕 7개</strong>(예약 없이 선착순·객실 TV 공실 확인) → 아기 첫 천연 온천 최적!</li>
+                  <li>• <strong>무료 특전:</strong> 무료 아이스크림(15:00~25:00), 유산균 음료(05:00~10:00), 요나키 소바(21:30~23:00)</li>
+                </ul>
+              </div>
+            </div>
           </div>
 
           {/* Price Plan Switcher */}
@@ -983,49 +1067,34 @@ export function App() {
             })}
           </div>
 
-          {/* STEP 1: YUFUIN 1 NIGHT */}
+          {/* CONFIRMED 2 STAYS SIDE-BY-SIDE */}
           <div className="space-y-5">
             <div className="border-l-4 border-[#8C5A3C] pl-4">
               <div className="text-xs font-semibold uppercase tracking-wider text-[#8C5A3C]">
-                Step 01 · Day 1 (12월 21일 월요일 · 1박)
+                Confirmed Stays · 12월 21일(월) ~ 24일(목) · 3박 4일
               </div>
               <h3 className="font-serif-kr text-xl sm:text-2xl font-medium text-[#191816] mt-0.5">
-                유후인 1박 추천 료칸 6선 — 독채 별채 노천탕부터 역 도보·유노츠보 가성비 료칸까지 (성인 3인 1실 기준)
+                확정 숙소 상세 브리핑 — 유후인 산스이칸(1박) & 온야도 노노 벳푸(2박)
               </h3>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 gap-6">
               {YUFUIN_RYOKANS.map((r) =>
                 renderRyokanCard(
                   r,
                   r.id === selectedYufuinRyokanId,
                   () => setSelectedYufuinRyokanId(r.id),
-                  '유후인 1박 (Day 1)',
+                  '유후인 1박 확정 (Day 1)',
                   1,
                   'yufuin-fukuoka'
                 )
               )}
-            </div>
-          </div>
-
-          {/* STEP 2: BEPPU 2 NIGHTS */}
-          <div className="space-y-5 pt-4">
-            <div className="border-l-4 border-[#191816] pl-4">
-              <div className="text-xs font-semibold uppercase tracking-wider text-[#8C5A3C]">
-                Step 02 · Day 2 ~ Day 3 (12월 22일 화 ~ 24일 목 · 2박 연박 확정)
-              </div>
-              <h3 className="font-serif-kr text-xl sm:text-2xl font-medium text-[#191816] mt-0.5">
-                벳푸 2박 연박 확정 숙소 — 아마네 리조트 세이카이 P타입 「아사기리(朝霧)」 129㎡ 최상층 스위트 vs 일반 객실 비교
-              </h3>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
               {BEPPU_RYOKANS.map((r) =>
                 renderRyokanCard(
                   r,
                   r.id === selectedBeppuRyokanId,
                   () => setSelectedBeppuRyokanId(r.id),
-                  '벳푸 2박 연박 (Day 2–3)',
+                  '벳푸 2박 연박 확정 (Day 2–3)',
                   2,
                   'beppu-yufuin'
                 )
@@ -1037,10 +1106,10 @@ export function App() {
           <div className="p-5 sm:p-8 bg-[#EFECE4] border-y border-[#191816] space-y-5">
             <div className="border-b border-[#D8D1C5] pb-3">
               <div className="text-xs tracking-[0.18em] uppercase text-[#8C5A3C] font-semibold">
-                Booking & Train Reservation Insider Note
+                Confirmed Stay & Transit Playbook
               </div>
               <h4 className="font-serif-kr text-base sm:text-lg font-medium text-[#191816] mt-1">
-                유후인 1박 + 벳푸 2박 숙소 및 특급열차 예약 시 20만 원 아끼는 실전 팁
+                유후인 산스이칸 · 온야도 노노 벳푸 200% 활용 실전 팁
               </h4>
             </div>
 
@@ -1077,7 +1146,7 @@ export function App() {
                       Transit Expense Breakdown
                     </div>
                     <h3 className="font-serif-kr text-lg font-semibold text-[#191816]">
-                      리무진 · JR 특급열차 · 짐배송 · 택시 실비 상세 내역 (4인 합계)
+                      리무진 · JR 특급열차 · 벳푸 시내 택시 실비 상세 내역 (4인 합계)
                     </h3>
                   </div>
                   <span className="text-sm font-bold text-[#191816] tabular-nums">
@@ -1253,7 +1322,7 @@ export function App() {
                   <div>
                     <div className="text-white font-medium">03. 확정 이동수단 (4일 실비 합산)</div>
                     <div className="text-xs text-white/65 mt-0.5">
-                      공항리무진 왕복 + JR 특급열차(유후인→벳푸) + 짐배송 + 벳푸 택시
+                      공항리무진 왕복 + JR 특급열차(유후인→벳푸) + 벳푸 시내 택시
                     </div>
                   </div>
                   <div className="tabular-nums font-medium text-white whitespace-nowrap">
