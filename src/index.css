@@ -1,21 +1,39 @@
+/* Hallmark · macrostructure: Workbench · tone: clean-daylight · anchor hue: 220 */
 @import "tailwindcss";
 
+:root {
+  --color-paper: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #F1F5F9;
+  --color-ink: #0F172A;
+  --color-ink-2: #334155;
+  --color-ink-muted: #64748B;
+  --color-rule: #E2E8F0;
+  --color-accent: #2563EB;
+  --color-accent-hover: #1D4ED8;
+  --color-focus: #3B82F6;
+  --radius-card: 16px;
+  --radius-control: 12px;
+  --radius-badge: 8px;
+}
+
 @layer base {
+  html,
   body {
+    overflow-x: clip;
     font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.015em;
     word-break: keep-all;
-    background-color: #F6F3EC;
-    color: #191816;
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    line-height: 1.6;
   }
 
-  .font-serif-kr {
-    font-family: 'Noto Serif KR', Georgia, serif;
-    letter-spacing: -0.03em;
-  }
-
+  .font-serif-kr,
   .font-editorial {
-    font-family: 'Cormorant Garamond', 'Noto Serif KR', Georgia, serif;
+    font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-style: normal;
+    letter-spacing: -0.02em;
   }
 
   .no-scrollbar::-webkit-scrollbar {
@@ -28,15 +46,16 @@
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #F6F3EC;
+  background: #F1F5F9;
 }
 ::-webkit-scrollbar-thumb {
-  background: #C8C1B4;
+  background: #CBD5E1;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #9E9689;
+  background: #94A3B8;
 }

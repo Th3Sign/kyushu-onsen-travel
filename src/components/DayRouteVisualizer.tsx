@@ -46,14 +46,13 @@ const DAY_META: Record<
     color: string
     totalDist: string
     totalTime: string
-    googleDirModify?: string
   }
 > = {
   1: {
     badge: 'Day 01 · 12/21(월)',
-    title: '오이타 공항(아기 13:00 점심) ➔ 산스이칸 짐보관 ➔ 센케 늦점·가벼운 산책 ➔ 산스이칸(18:00 석식·20:00 취침)',
+    title: '오이타 공항(아기 13:00 점심) ➔ 산스이칸 짐보관 ➔ 센케 늦점·산책 ➔ 산스이칸(18:00 석식·20:00 취침)',
     subtitle: '공항 리무진 55분 후 평지 도보 8분 산스이칸 무료 짐보관 & 무리 없는 유노츠보 초입·마트 산책',
-    color: '#8C5A3C',
+    color: '#2563EB',
     totalDist: '약 56km',
     totalTime: '리무진 55분 + 가벼운 도보',
   },
@@ -61,7 +60,7 @@ const DAY_META: Record<
     badge: 'Day 02 · 12/22(화)',
     title: '산스이칸(08:00 조식) ➔ 특급 유후 2호(11:44) ➔ 온야도 노노 짐보관 ➔ 유메타운 중식·쇼핑 ➔ 토요츠네 석식',
     subtitle: '12:50 벳푸역 도보 1분 짐보관 → 13:05 스시 메이진 중식·쇼핑 → 13층 전세탕 → 18:00 토요츠네 석식·20:00 취침',
-    color: '#29527A',
+    color: '#0D9488',
     totalDist: '약 45km',
     totalTime: '특급열차 65분 + 택시 3분',
   },
@@ -69,7 +68,7 @@ const DAY_META: Record<
     badge: 'Day 03 · 12/23(수)',
     title: '온야도 노노(08:00 조식) ➔ 우미타마고 수족관 ➔ 칸나와 지옥찜(13:00 중식)·가마도 지옥 ➔ 쇼핑 ➔ 로바타 진 석식',
     subtitle: '수족관·지옥 온천·쇼핑(토키와/돈키호테) 알찬 순환! 제4수요일 정상 영업 지옥찜 & 18:00 로바타 진 석식·20:00 취침',
-    color: '#2D662D',
+    color: '#7C3AED',
     totalDist: '약 21km',
     totalTime: '택시 3구간 총 40분',
   },
@@ -77,7 +76,7 @@ const DAY_META: Record<
     badge: 'Day 04 · 12/24(목)',
     title: '온야도 노노(08:00 조식) ➔ 벳푸역 앞([B]) / 키타하마 에어라이너 ➔ 공항 3층 나나세 중식·아기 13:00 점심 ➔ 귀국',
     subtitle: '09:50 체크아웃 후 에어라이너 탑승 → 공항 3층 나나세 중식 & 2층 수유실 아기 13:00 점심 후 13:55 출국',
-    color: '#A64B2A',
+    color: '#EA580C',
     totalDist: '약 40km',
     totalTime: '도보 1~8분 + 리무진 50~55분',
   },
@@ -88,7 +87,7 @@ const MAP_TILES: Record<'osm' | 'gsi', { url: string; attribution: string; maxZo
     url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 19,
-    label: 'OSM 기본',
+    label: 'OSM 기본 지도',
   },
   gsi: {
     url: 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png',
@@ -134,7 +133,7 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
           mode: '🚌 유후인 패스트라이너 리무진',
           duration: '55분 (논스톱)',
           distance: '54km',
-          color: '#8C5A3C',
+          color: '#2563EB',
         },
         googleMapsQuery: 'Oita Airport',
       },
@@ -154,7 +153,7 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
           mode: '🚶 평지 유모차 가벼운 산책',
           duration: '도보 10분',
           distance: '0.7km',
-          color: '#8C5A3C',
+          color: '#2563EB',
           dashed: true,
         },
         googleMapsQuery: 'Yufuin Senke',
@@ -175,7 +174,7 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
           mode: '🚶 숙소 도보 복귀',
           duration: '도보 2~5분',
           distance: '0.3km',
-          color: '#8C5A3C',
+          color: '#2563EB',
           dashed: true,
         },
         googleMapsQuery: 'MaxValu Yufuin',
@@ -212,7 +211,7 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
           mode: '🚶 완전 평지 도보',
           duration: '도보 8분',
           distance: '550m',
-          color: '#29527A',
+          color: '#0D9488',
           dashed: true,
         },
         googleMapsQuery: selectedYufuinRyokan.enSearchQuery,
@@ -233,7 +232,7 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
           mode: '🚆 JR 특급 유후 2호 (무환승 직통)',
           duration: '65분',
           distance: '42km',
-          color: '#29527A',
+          color: '#0D9488',
         },
         googleMapsQuery: 'Yufuin Station',
       },
@@ -253,7 +252,7 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
           mode: '🚕 택시 3분 (¥650) 또는 도보 10분',
           duration: '3분',
           distance: '800m',
-          color: '#29527A',
+          color: '#0D9488',
         },
         googleMapsQuery: 'Onyado Nono Beppu',
       },
@@ -273,7 +272,7 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
           mode: '🚕 택시 3분 또는 도보 10분',
           duration: '3~10분',
           distance: '800m',
-          color: '#29527A',
+          color: '#0D9488',
           dashed: true,
         },
         googleMapsQuery: 'YouMe Town Beppu',
@@ -310,7 +309,7 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
           mode: '🚕 해안 택시 직행',
           duration: '11분 (약 ¥1,700)',
           distance: '4.8km',
-          color: '#2D662D',
+          color: '#7C3AED',
         },
         googleMapsQuery: selectedBeppuRyokan.enSearchQuery,
       },
@@ -330,7 +329,7 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
           mode: '🚕 택시 이동',
           duration: '15분 (약 ¥2,300)',
           distance: '7.8km',
-          color: '#2D662D',
+          color: '#7C3AED',
         },
         googleMapsQuery: 'Umitamago Aquarium Beppu',
       },
@@ -350,7 +349,7 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
           mode: '🚕 택시 복귀',
           duration: '14분 (약 ¥2,000)',
           distance: '5.5km',
-          color: '#2D662D',
+          color: '#7C3AED',
         },
         googleMapsQuery: 'Jigoku Mushi Kobo Kannawa',
       },
@@ -386,7 +385,7 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
           mode: '🚶 도보 1분(벳푸역) 또는 택시 2분(키타하마)',
           duration: '1~8분',
           distance: '0.1~0.6km',
-          color: '#A64B2A',
+          color: '#EA580C',
           dashed: true,
         },
         googleMapsQuery: selectedBeppuRyokan.enSearchQuery,
@@ -407,7 +406,7 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
           mode: '🚌 오이타공항 에어라이너',
           duration: '50~55분 (해안 고속도로)',
           distance: '38km',
-          color: '#A64B2A',
+          color: '#EA580C',
         },
         googleMapsQuery: 'Beppu Kitahama Bus Stop',
       },
@@ -442,7 +441,6 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
     return filteredStops[0] || null
   }, [filteredStops, selectedStopId])
 
-  // Build Google Maps Directions URL for current day or entire trip
   const googleMapsDirectionsUrl = useMemo(() => {
     if (filteredStops.length < 2) return 'https://www.google.com/maps'
     const origin = `${filteredStops[0].lat},${filteredStops[0].lng}`
@@ -460,7 +458,6 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
     }&travelmode=driving`
   }, [filteredStops])
 
-  // Initialize Leaflet Map (cleanup when switching away from map view)
   useEffect(() => {
     if (viewMode !== 'map') {
       if (mapInstanceRef.current) {
@@ -497,19 +494,17 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
 
     layerGroup.clearLayers()
 
-    // Draw polylines per day
     const daysToDraw = activeDayFilter === 'all' ? [1, 2, 3, 4] : [activeDayFilter]
 
     daysToDraw.forEach((d) => {
       const dayStops = allStops.filter((s) => s.day === d)
-      const dayColor = DAY_META[d]?.color || '#8C5A3C'
+      const dayColor = DAY_META[d]?.color || '#2563EB'
 
       for (let i = 0; i < dayStops.length - 1; i++) {
         const from = dayStops[i]
         const to = dayStops[i + 1]
         const isDashed = from.nextTransit?.dashed
 
-        // Subtle outer glow line
         L.polyline(
           [
             [from.lat, from.lng],
@@ -518,12 +513,11 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
           {
             color: '#FFFFFF',
             weight: 7,
-            opacity: 0.85,
+            opacity: 0.9,
           }
         ).addTo(layerGroup)
 
-        // Main colored route line
-        const poly = L.polyline(
+        L.polyline(
           [
             [from.lat, from.lng],
             [to.lat, to.lng],
@@ -536,27 +530,23 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
           }
         ).addTo(layerGroup)
 
-        // Add midpoint transit badge tooltip on map when viewing single day
         if (activeDayFilter !== 'all' && from.nextTransit) {
           const midLat = (from.lat + to.lat) / 2
           const midLng = (from.lng + to.lng) / 2
           const transitIcon = L.divIcon({
             className: 'custom-transit-pill',
-            html: `<div style="background:#191816;color:#E5C89B;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;border:1.5px solid #E5C89B;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.25);transform:translate(-50%,-50%);display:inline-block;">${from.nextTransit.mode.split(' ')[0]} ${from.nextTransit.duration.split(' ')[0]}</div>`,
+            html: `<div style="background:#0F172A;color:#FFFFFF;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;border:1.5px solid #FFFFFF;white-space:nowrap;box-shadow:0 2px 8px rgba(15,23,42,0.25);transform:translate(-50%,-50%);display:inline-block;">${from.nextTransit.mode.split(' ')[0]} ${from.nextTransit.duration.split(' ')[0]}</div>`,
             iconSize: [0, 0],
           })
           L.marker([midLat, midLng], { icon: transitIcon, interactive: false }).addTo(layerGroup)
         }
-
-        void poly
       }
     })
 
-    // Draw numbered markers
     const boundsPoints: [number, number][] = []
 
     filteredStops.forEach((stop) => {
-      const dayColor = DAY_META[stop.day]?.color || '#191816'
+      const dayColor = DAY_META[stop.day]?.color || '#2563EB'
       const isSelected = activeSelectedStop?.id === stop.id
       boundsPoints.push([stop.lat, stop.lng])
 
@@ -572,13 +562,13 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
           width: ${isSelected ? '34px' : '28px'};
           height: ${isSelected ? '34px' : '28px'};
           border-radius: 9999px;
-          background: ${isSelected ? '#191816' : dayColor};
-          color: ${isSelected ? '#E5C89B' : '#FFFFFF'};
+          background: ${isSelected ? '#0F172A' : dayColor};
+          color: #FFFFFF;
           font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
           font-size: ${activeDayFilter === 'all' ? '10px' : '12px'};
           font-weight: 800;
-          border: ${isSelected ? '3px solid #E5C89B' : '2.5px solid #FFFFFF'};
-          box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+          border: ${isSelected ? '3px solid #3B82F6' : '2.5px solid #FFFFFF'};
+          box-shadow: 0 3px 10px rgba(15,23,42,0.3);
           transform: translate(-50%, -50%);
           transition: all 0.2s ease;
         ">
@@ -595,23 +585,16 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
       const marker = L.marker([stop.lat, stop.lng], { icon: customIcon }).addTo(layerGroup)
 
       marker.bindPopup(
-        `<div style="font-family:Pretendard,sans-serif;min-width:210px;padding:2px;">
-          <div style="font-size:10px;font-weight:700;color:${dayColor};text-transform:uppercase;">
-            Day 0${stop.day} · Stop 0${stop.order} (${stop.time})
+        `<div style="font-family:Pretendard,sans-serif;min-width:220px;padding:3px;">
+          <div style="font-size:11px;font-weight:700;color:${dayColor};">
+            Day 0${stop.day} · #${stop.order} (${stop.time})
           </div>
-          <div style="font-size:13px;font-weight:700;color:#191816;margin-top:2px;">
+          <div style="font-size:14px;font-weight:700;color:#0F172A;margin-top:3px;">
             ${stop.name}
           </div>
-          <div style="font-size:11px;color:#5C5852;margin-top:4px;line-height:1.4;">
+          <div style="font-size:12px;color:#334155;margin-top:4px;line-height:1.45;">
             ${stop.summary}
           </div>
-          ${
-            stop.nextTransit
-              ? `<div style="margin-top:6px;padding:4px 6px;background:#FAF6EE;border:1px solid #E5DEC9;font-size:10px;color:#8C5A3C;font-weight:600;">
-                  다음 이동: ${stop.nextTransit.mode} (${stop.nextTransit.duration})
-                </div>`
-              : ''
-          }
         </div>`,
         { closeButton: false, offset: [0, -10] }
       )
@@ -631,7 +614,6 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
     }, 120)
   }, [viewMode, activeDayFilter, filteredStops, allStops, activeSelectedStop])
 
-  // Switch map tile layer cleanly when user toggles OSM / GSI Japan (API key free)
   useEffect(() => {
     const map = mapInstanceRef.current
     if (!map || viewMode !== 'map') return
@@ -647,7 +629,6 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
     tileLayerRef.current.bringToBack()
   }, [mapTileStyle, viewMode])
 
-  // Unmount cleanup
   useEffect(() => {
     return () => {
       if (mapInstanceRef.current) {
@@ -659,7 +640,6 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
     }
   }, [])
 
-  // Focus map when user clicks a stop pill
   const handleSelectStop = (stop: MapStop) => {
     setSelectedStopId(stop.id)
     if (viewMode === 'map' && mapInstanceRef.current) {
@@ -672,48 +652,47 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
   const currentMeta = activeDayFilter === 'all' ? null : DAY_META[activeDayFilter]
 
   return (
-    <div className="bg-white border-2 border-[#191816] shadow-xs overflow-hidden">
-      {/* Top Bar: Day Route Tabs & View Switcher */}
-      <div className="bg-[#191816] text-[#F6F3EC] p-4 sm:p-6 space-y-4">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+      {/* Top Bar */}
+      <div className="bg-slate-900 text-white p-4 sm:p-5 space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div>
+          <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 bg-[#E5C89B] text-[#191816] text-[10px] font-bold uppercase tracking-wider">
-                Interactive Route Map
+              <span className="px-2.5 py-0.5 rounded-md bg-blue-600 text-white text-xs font-bold">
+                실시간 지도 동선
               </span>
-              <span className="text-xs text-[#E5C89B] font-medium">
+              <span className="text-xs text-slate-300 font-medium">
                 확정 숙소(산스이칸 · 온야도 노노) 실좌표 연동
               </span>
             </div>
-            <h3 className="font-serif-kr text-lg sm:text-2xl font-normal text-white mt-1.5">
-              일자별 실제 지도 경로 & 스톱별 이동시간 시각화
+            <h3 className="text-base sm:text-xl font-bold text-white">
+              일자별 지도 경로 & 경유지별 이동시간
             </h3>
           </div>
 
-          {/* View Mode & Google Maps Full Route Link */}
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <div className="inline-flex border border-white/25 bg-white/5 p-0.5">
+            <div className="inline-flex rounded-xl bg-slate-800 p-1 border border-slate-700">
               <button
                 type="button"
                 onClick={() => setViewMode('map')}
-                className={`px-3 py-1.5 text-xs font-semibold transition cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                   viewMode === 'map'
-                    ? 'bg-[#E5C89B] text-[#191816]'
-                    : 'text-white/75 hover:text-white'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-slate-300 hover:text-white'
                 }`}
               >
-                🗺️ 실제 지도 경로
+                🗺️ 지도 보기
               </button>
               <button
                 type="button"
                 onClick={() => setViewMode('schematic')}
-                className={`px-3 py-1.5 text-xs font-semibold transition cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                   viewMode === 'schematic'
-                    ? 'bg-[#E5C89B] text-[#191816]'
-                    : 'text-white/75 hover:text-white'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-slate-300 hover:text-white'
                 }`}
               >
-                📐 노선도 다이어그램
+                📐 단계별 카드
               </button>
             </div>
 
@@ -721,31 +700,15 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
               href={googleMapsDirectionsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-1.5 text-xs font-semibold bg-white/10 hover:bg-white/20 text-[#E5C89B] border border-[#E5C89B]/40 transition"
+              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition"
             >
-              Google 지도 앱으로 경로 열기 ↗
+              Google 지도 경로 열기 ↗
             </a>
           </div>
         </div>
 
-        {/* Day Selector Tabs (Synced with parent activeDayFilter) */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 pt-1">
-          <button
-            type="button"
-            onClick={() => {
-              onSelectDay('all')
-              setSelectedStopId(null)
-            }}
-            className={`p-2.5 text-left border transition cursor-pointer ${
-              activeDayFilter === 'all'
-                ? 'bg-[#E5C89B] text-[#191816] border-[#E5C89B] font-bold'
-                : 'bg-white/5 text-white/80 border-white/15 hover:bg-white/10'
-            }`}
-          >
-            <div className="text-[10px] uppercase tracking-wider opacity-80">All 4 Days</div>
-            <div className="text-xs sm:text-sm mt-0.5">전체 3박 4일 광역 루트</div>
-          </button>
-
+        {/* Day Selector inside Map */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {[1, 2, 3, 4].map((d) => {
             const active = activeDayFilter === d
             const meta = DAY_META[d]
@@ -757,85 +720,99 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
                   onSelectDay(d)
                   setSelectedStopId(null)
                 }}
-                className={`p-2.5 text-left border transition cursor-pointer ${
+                className={`p-2.5 rounded-xl text-left border transition cursor-pointer ${
                   active
-                    ? 'bg-[#E5C89B] text-[#191816] border-[#E5C89B] font-bold'
-                    : 'bg-white/5 text-white/80 border-white/15 hover:bg-white/10'
+                    ? 'bg-blue-600 text-white border-blue-500 font-bold shadow-xs'
+                    : 'bg-slate-800/80 text-slate-200 border-slate-700 hover:bg-slate-800'
                 }`}
               >
-                <div className="flex items-center justify-between text-[10px] uppercase tracking-wider">
-                  <span className="flex items-center gap-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-1.5 font-bold">
                     <span
                       className="w-2 h-2 rounded-full inline-block"
-                      style={{ backgroundColor: active ? '#191816' : meta.color }}
+                      style={{ backgroundColor: active ? '#FFFFFF' : meta.color }}
                     />
                     Day 0{d}
                   </span>
-                  <span className="opacity-75">{meta.totalDist}</span>
+                  <span className="opacity-75 text-[11px]">{meta.totalDist}</span>
                 </div>
-                <div className="text-xs sm:text-sm truncate mt-0.5">
-                  {d === 1 && '공항 ➔ 유후인 산책·1박'}
-                  {d === 2 && '유후인 ➔ 특급열차 ➔ 벳푸'}
-                  {d === 3 && '수족관 ➔ 지옥찜 ➔ 리조트'}
-                  {d === 4 && '벳푸 ➔ 에어라이너 ➔ 공항'}
+                <div className="text-xs truncate mt-1 opacity-95">
+                  {d === 1 && '공항 ➔ 산스이칸·유후인'}
+                  {d === 2 && '특급열차 ➔ 온야도 노노'}
+                  {d === 3 && '수족관 ➔ 지옥찜·가마도'}
+                  {d === 4 && '에어라이너 ➔ 공항 귀국'}
                 </div>
               </button>
             )
           })}
+          <button
+            type="button"
+            onClick={() => {
+              onSelectDay('all')
+              setSelectedStopId(null)
+            }}
+            className={`p-2.5 rounded-xl text-left border transition cursor-pointer ${
+              activeDayFilter === 'all'
+                ? 'bg-blue-600 text-white border-blue-500 font-bold shadow-xs'
+                : 'bg-slate-800/80 text-slate-200 border-slate-700 hover:bg-slate-800'
+            }`}
+          >
+            <div className="text-xs font-bold">전체 4일 루트</div>
+            <div className="text-xs truncate mt-1 opacity-90">3박 4일 광역 동선</div>
+          </button>
         </div>
       </div>
 
-      {/* Sub-header Banner for Current Day Route Summary */}
-      <div className="bg-[#EFECE4] border-b border-[#D8D1C5] px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+      {/* Sub-header */}
+      <div className="bg-slate-50 border-b border-slate-200 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
         {currentMeta ? (
           <>
-            <div className="flex items-center gap-2 font-medium text-[#191816]">
+            <div className="flex flex-wrap items-center gap-2 font-semibold text-slate-900">
               <span
-                className="px-2 py-0.5 text-white text-[11px] font-bold"
+                className="px-2.5 py-0.5 rounded-md text-white text-xs font-bold"
                 style={{ backgroundColor: currentMeta.color }}
               >
                 {currentMeta.badge}
               </span>
               <span>{currentMeta.title}</span>
             </div>
-            <div className="text-[#5C5852] flex items-center gap-3">
-              <span>📏 이동 거리: <strong>{currentMeta.totalDist}</strong></span>
-              <span>⏱ 차량/열차 탑승: <strong>{currentMeta.totalTime}</strong></span>
+            <div className="text-slate-600 flex items-center gap-3 text-xs sm:text-sm">
+              <span>이동 거리: <strong>{currentMeta.totalDist}</strong></span>
+              <span>탑승 시간: <strong>{currentMeta.totalTime}</strong></span>
             </div>
           </>
         ) : (
           <>
-            <div className="font-medium text-[#191816]">
-              📍 <strong>3박 4일 전체 루트:</strong> 오이타공항(Day 1) ➔ 유후인 1박 ➔ JR 특급열차(Day 2) ➔ 벳푸 2박 연박(Day 2~3) ➔ 오이타공항 귀국(Day 4)
+            <div className="font-semibold text-slate-900">
+              📍 <strong>3박 4일 전체 루트:</strong> 오이타공항(Day 1) ➔ 유후인 산스이칸 1박 ➔ JR 특급 유후(Day 2) ➔ 온야도 노노 벳푸 2박(Day 2~3) ➔ 오이타공항(Day 4)
             </div>
-            <div className="text-[#8C5A3C] font-semibold">
-              역세권 무료 짐보관(산스이칸·온야도 노노) + 벳푸 2박 연박으로 짐 이동 스트레스 최소!
+            <div className="text-blue-700 font-semibold text-xs sm:text-sm">
+              역세권 무료 짐보관 + 벳푸 2박 연박으로 짐 이동 최소화
             </div>
           </>
         )}
       </div>
 
-      {/* Main Map or Schematic Canvas */}
+      {/* Map or Schematic */}
       {viewMode === 'map' ? (
         <div className="grid lg:grid-cols-12">
-          {/* Interactive Leaflet Map (7 cols) */}
-          <div className="lg:col-span-7 relative border-b lg:border-b-0 lg:border-r border-[#D8D1C5]">
+          <div className="lg:col-span-7 relative border-b lg:border-b-0 lg:border-r border-slate-200">
             <div
               ref={mapContainerRef}
-              className="w-full h-[340px] sm:h-[430px] z-10 bg-[#E6E2D8]"
+              className="w-full h-[320px] sm:h-[420px] z-10 bg-slate-100"
             />
 
-            {/* Free No-API-Key Tile Style Toggle (OSM / GSI Japan) */}
-            <div className="absolute top-3 right-3 z-20 inline-flex bg-[#191816]/90 backdrop-blur-xs border border-white/20 p-0.5 text-[10px] shadow">
+            {/* Free No-API-Key Tile Toggle */}
+            <div className="absolute top-3 right-3 z-20 inline-flex rounded-xl bg-slate-900/90 backdrop-blur-xs border border-white/20 p-1 text-xs shadow">
               {(['osm', 'gsi'] as const).map((key) => (
                 <button
                   key={key}
                   type="button"
                   onClick={() => setMapTileStyle(key)}
-                  className={`px-2 py-1 transition cursor-pointer font-semibold ${
+                  className={`px-2.5 py-1 rounded-lg transition cursor-pointer font-bold ${
                     mapTileStyle === key
-                      ? 'bg-[#E5C89B] text-[#191816]'
-                      : 'text-white/80 hover:text-white'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-slate-200 hover:text-white'
                   }`}
                 >
                   {MAP_TILES[key].label}
@@ -843,84 +820,84 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
               ))}
             </div>
 
-            {/* Map Legend Overlay */}
-            <div className="absolute bottom-3 left-3 z-20 bg-[#191816]/90 backdrop-blur-xs text-white px-3 py-2 text-[11px] flex flex-wrap items-center gap-3 border border-white/15 shadow">
+            {/* Map Legend */}
+            <div className="absolute bottom-3 left-3 z-20 rounded-xl bg-slate-900/90 backdrop-blur-xs text-white px-3 py-2 text-xs flex flex-wrap items-center gap-3 border border-white/15 shadow">
               <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#8C5A3C] inline-block" /> Day 1 유후인
+                <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB] inline-block" /> Day 1
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#29527A] inline-block" /> Day 2 JR특급·벳푸
+                <span className="w-2.5 h-2.5 rounded-full bg-[#0D9488] inline-block" /> Day 2
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#2D662D] inline-block" /> Day 3 수족관·지옥찜
+                <span className="w-2.5 h-2.5 rounded-full bg-[#7C3AED] inline-block" /> Day 3
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#A64B2A] inline-block" /> Day 4 공항귀국
+                <span className="w-2.5 h-2.5 rounded-full bg-[#EA580C] inline-block" /> Day 4
               </span>
             </div>
           </div>
 
-          {/* Right Column: Interactive Stop-by-Stop Route Chain (5 cols) */}
-          <div className="lg:col-span-5 flex flex-col justify-between bg-[#FAF8F4] max-h-[430px] overflow-y-auto">
+          {/* Stop List */}
+          <div className="lg:col-span-5 flex flex-col justify-between bg-slate-50/60 max-h-[420px] overflow-y-auto">
             <div className="p-4 sm:p-5 space-y-3">
-              <div className="flex items-center justify-between border-b border-[#DFD9CE] pb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#8C5A3C]">
-                  📍 경유지 순서 (클릭 시 지도 포커스)
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+                <span className="text-xs sm:text-sm font-bold text-slate-900">
+                  📍 경유지 순서 (클릭 시 지도 이동)
                 </span>
-                <span className="text-[11px] text-[#78736A]">총 {filteredStops.length}개 지점</span>
+                <span className="text-xs font-medium text-slate-500">총 {filteredStops.length}곳</span>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {filteredStops.map((stop) => {
                   const isSelected = activeSelectedStop?.id === stop.id
-                  const dayColor = DAY_META[stop.day]?.color || '#191816'
+                  const dayColor = DAY_META[stop.day]?.color || '#2563EB'
 
                   return (
                     <div key={stop.id} className="space-y-1.5">
                       <button
                         type="button"
                         onClick={() => handleSelectStop(stop)}
-                        className={`w-full text-left p-3 border transition cursor-pointer flex items-start gap-3 ${
+                        className={`w-full text-left p-3.5 rounded-xl border transition cursor-pointer flex items-start gap-3 ${
                           isSelected
-                            ? 'bg-[#191816] text-[#F6F3EC] border-[#191816] shadow-xs'
-                            : 'bg-white hover:bg-[#EFECE4] text-[#191816] border-[#DFD9CE]'
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                            : 'bg-white hover:bg-slate-100 text-slate-900 border-slate-200'
                         }`}
                       >
                         <span
-                          className="w-6 h-6 rounded-full text-[11px] font-mono font-bold flex items-center justify-center shrink-0 mt-0.5"
+                          className="w-6 h-6 rounded-full text-xs font-mono font-bold flex items-center justify-center shrink-0 mt-0.5"
                           style={{
-                            backgroundColor: isSelected ? '#E5C89B' : dayColor,
-                            color: isSelected ? '#191816' : '#FFFFFF',
+                            backgroundColor: isSelected ? '#FFFFFF' : dayColor,
+                            color: isSelected ? '#1D4ED8' : '#FFFFFF',
                           }}
                         >
                           {activeDayFilter === 'all' ? `D${stop.day}` : stop.order}
                         </span>
 
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-2 text-[11px]">
+                          <div className="flex items-center justify-between gap-2 text-xs">
                             <span
-                              className={`font-mono font-semibold ${
-                                isSelected ? 'text-[#E5C89B]' : 'text-[#8C5A3C]'
+                              className={`font-mono font-bold ${
+                                isSelected ? 'text-blue-100' : 'text-blue-600'
                               }`}
                             >
                               {stop.time}
                             </span>
                             <span
-                              className={`px-1.5 py-0.2 text-[10px] ${
+                              className={`px-2 py-0.5 rounded-md text-[11px] font-semibold ${
                                 isSelected
-                                  ? 'bg-white/15 text-white'
-                                  : 'bg-[#EFECE4] text-[#5C5852]'
+                                  ? 'bg-white/20 text-white'
+                                  : 'bg-slate-100 text-slate-600'
                               }`}
                             >
                               {stop.category}
                             </span>
                           </div>
-                          <div className="text-xs sm:text-sm font-semibold truncate mt-0.5">
+                          <div className="text-sm font-bold truncate mt-1">
                             {stop.name}
                           </div>
                           <p
-                            className={`text-[11px] mt-1 leading-relaxed ${
-                              isSelected ? 'text-white/80' : 'text-[#5C5852]'
+                            className={`text-xs mt-1 leading-relaxed ${
+                              isSelected ? 'text-blue-50' : 'text-slate-600'
                             }`}
                           >
                             {stop.summary}
@@ -928,14 +905,13 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
                         </div>
                       </button>
 
-                      {/* Transit Connector Pill */}
                       {stop.nextTransit && (
-                        <div className="pl-6 flex items-center gap-2 text-[11px] text-[#5C5852] py-0.5">
-                          <span className="text-[#8C5A3C] font-bold">↓</span>
-                          <span className="px-2 py-0.5 bg-[#EFECE4] border border-[#DFD9CE] font-medium text-[#191816]">
+                        <div className="pl-6 flex items-center gap-2 text-xs text-slate-600 py-0.5">
+                          <span className="text-blue-600 font-bold">↓</span>
+                          <span className="px-2.5 py-0.5 rounded-lg bg-white border border-slate-200 font-semibold text-slate-800">
                             {stop.nextTransit.mode}
                           </span>
-                          <span className="text-[#78736A]">
+                          <span className="text-slate-500">
                             {stop.nextTransit.duration} · {stop.nextTransit.distance}
                           </span>
                         </div>
@@ -948,44 +924,43 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
           </div>
         </div>
       ) : (
-        /* Schematic Step-by-Step Visual Diagram Mode */
-        <div className="p-5 sm:p-8 bg-[#FAF8F4] space-y-6">
+        <div className="p-5 sm:p-6 bg-slate-50">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {filteredStops.map((stop, idx) => {
-              const dayColor = DAY_META[stop.day]?.color || '#191816'
+              const dayColor = DAY_META[stop.day]?.color || '#2563EB'
               return (
                 <div
                   key={stop.id}
-                  className="bg-white border border-[#191816] p-4 flex flex-col justify-between space-y-3 relative"
+                  className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col justify-between space-y-3 shadow-xs"
                 >
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <span
-                        className="px-2 py-0.5 text-[10px] font-mono font-bold text-white"
+                        className="px-2.5 py-0.5 rounded-md text-xs font-mono font-bold text-white"
                         style={{ backgroundColor: dayColor }}
                       >
-                        DAY {stop.day} · STEP 0{stop.order}
+                        DAY {stop.day} · #{stop.order}
                       </span>
-                      <span className="text-[11px] font-mono font-semibold text-[#8C5A3C]">
+                      <span className="text-xs font-mono font-bold text-blue-600">
                         {stop.time}
                       </span>
                     </div>
 
-                    <h4 className="font-serif-kr text-sm sm:text-base font-bold text-[#191816]">
+                    <h4 className="text-sm sm:text-base font-bold text-slate-900">
                       {stop.name}
                     </h4>
-                    <p className="text-xs text-[#4A4742] leading-relaxed">{stop.summary}</p>
+                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{stop.summary}</p>
                   </div>
 
-                  <div className="space-y-2 pt-2 border-t border-[#EFECE4]">
-                    <div className="p-2 bg-[#FFFDF5] border border-[#F3E7C4] text-[11px] text-[#6D4C00]">
-                      <strong className="text-[#A66700]">👶 아기 팁:</strong> {stop.babyPoint}
+                  <div className="space-y-2 pt-2 border-t border-slate-100">
+                    <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-950 leading-relaxed">
+                      <strong className="text-amber-800">👶 아기 팁:</strong> {stop.babyPoint}
                     </div>
 
                     {stop.nextTransit && idx < filteredStops.length - 1 && (
-                      <div className="p-2 bg-[#EFECE4] text-[11px] font-semibold text-[#191816] flex items-center justify-between">
+                      <div className="p-2.5 rounded-xl bg-slate-100 text-xs font-bold text-slate-800 flex items-center justify-between">
                         <span>➔ {stop.nextTransit.mode}</span>
-                        <span className="text-[#8C5A3C]">{stop.nextTransit.duration}</span>
+                        <span className="text-blue-600">{stop.nextTransit.duration}</span>
                       </div>
                     )}
 
@@ -995,7 +970,7 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block text-center py-1.5 text-[11px] border border-[#D8D1C5] hover:border-[#191816] text-[#191816] transition font-medium"
+                      className="block text-center py-2 rounded-xl text-xs border border-slate-200 hover:border-blue-600 hover:text-blue-600 text-slate-700 transition font-semibold"
                     >
                       📍 구글맵 위치 보기 ↗
                     </a>
@@ -1007,19 +982,19 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
         </div>
       )}
 
-      {/* Bottom Selected Stop Detail Bar */}
+      {/* Bottom Selected Stop Bar */}
       {activeSelectedStop && (
-        <div className="bg-[#FAF6EE] border-t border-[#D8D1C5] px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-          <div className="space-y-0.5">
+        <div className="bg-blue-50/70 border-t border-slate-200 px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm">
+          <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2 py-0.5 bg-[#191816] text-[#E5C89B] font-mono text-[10px] font-bold">
-                선택된 지점 · Day 0{activeSelectedStop.day} #{activeSelectedStop.order}
+              <span className="px-2.5 py-0.5 rounded-md bg-blue-600 text-white font-mono text-xs font-bold">
+                Day 0{activeSelectedStop.day} · #{activeSelectedStop.order}
               </span>
-              <strong className="text-sm text-[#191816]">{activeSelectedStop.name}</strong>
-              <span className="text-[#78736A]">({activeSelectedStop.jpName})</span>
+              <strong className="text-sm sm:text-base text-slate-900">{activeSelectedStop.name}</strong>
+              <span className="text-slate-500 text-xs">({activeSelectedStop.jpName})</span>
             </div>
-            <p className="text-[#6D4C00] mt-1">
-              <strong>👶 13개월 아기 동선 포인트:</strong> {activeSelectedStop.babyPoint}
+            <p className="text-slate-700 text-xs sm:text-sm">
+              <strong className="text-amber-800">👶 13개월 아기 포인트:</strong> {activeSelectedStop.babyPoint}
             </p>
           </div>
 
@@ -1029,9 +1004,9 @@ export const DayRouteVisualizer: React.FC<DayRouteVisualizerProps> = ({
             )}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3.5 py-2 bg-[#191816] text-[#F6F3EC] font-semibold hover:bg-[#33312E] transition shrink-0 text-center"
+            className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs sm:text-sm font-bold hover:bg-slate-800 transition shrink-0 text-center"
           >
-            📍 이 장소 Google 지도 열기 ↗
+            📍 Google 지도 열기 ↗
           </a>
         </div>
       )}

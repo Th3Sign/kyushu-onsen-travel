@@ -1,10 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import {
-  HeroOnsenShader,
-  DestinationShaderBanner,
-  OnsenShaderMood,
-} from './components/ShaderBackgrounds'
-import {
   REGION_PLANS,
   CONFIRMED_FLIGHT,
   YUFUIN_RYOKANS,
@@ -20,23 +15,16 @@ import { DayRouteVisualizer } from './components/DayRouteVisualizer'
 import { LoginPage } from './components/LoginPage'
 import { useAuth, SavedTravelPlan } from './context/AuthContext'
 
-const SHADER_MOOD_META: {
-  id: OnsenShaderMood
-  label: string
-}[] = [
-  { id: 'hinoki-wgsl', label: 'Hinoki Wave' },
-  { id: 'yufuin-mist', label: 'Yufuin Mist (1박)' },
-  { id: 'beppu-steam', label: 'Beppu Steam (2박)' },
-]
+type MainTabId = 'schedule' | 'meals' | 'transit' | 'stays-folio'
 
 export function App() {
   const { user, isCheckingSession } = useAuth()
 
   if (isCheckingSession) {
     return (
-      <div className="min-h-screen bg-[#111110] text-[#F6F3EC] flex flex-col items-center justify-center gap-3 px-4">
-        <div className="w-6 h-6 border-2 border-[#E5C89B] border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs sm:text-sm text-[#E5C89B] tracking-wider">
+      <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col items-center justify-center gap-3 px-4">
+        <div className="w-7 h-7 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm font-semibold text-slate-700">
           Neon DB 로그인 세션 확인 중...
         </p>
       </div>
@@ -55,8 +43,10 @@ function TravelJournal() {
   const [saveStatusMsg, setSaveStatusMsg] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [pendingSavedPlan, setPendingSavedPlan] = useState<SavedTravelPlan | null>(null)
 
-  const [shaderMood, setShaderMood] = useState<OnsenShaderMood>('hinoki-wgsl')
-  const [activeDayFilter, setActiveDayFilter] = useState<number | 'all'>('all')
+  const [mainTab, setMainTab] = useState<MainTabId>('schedule')
+  const [activeDayFilter, setActiveDayFilter] = useState<number | 'all'>(1)
+  const [showRouteMap, setShowRouteMap] = useState<boolean>(true)
+
   const [selectedYufuinRyokanId, setSelectedYufuinRyokanId] = useState<string>('yufuin-sansuikan')
   const [selectedBeppuRyokanId, setSelectedBeppuRyokanId] = useState<string>('beppu-onyado-nono')
   const [extraFoodAndTicketKRW, setExtraFoodAndTicketKRW] = useState<number>(650000)
@@ -131,7 +121,6 @@ function TravelJournal() {
     [selectedBeppuRyokanId]
   )
 
-  // 확정 숙소 단일 기준 예상 요금 (산스이칸: 2식 올인클루시브 / 온야도 노노: 조식포함)
   const yufuin1NightKRW = selectedYufuinRyokan.otaHalfBoardKRW
   const yufuin1NightJPY = selectedYufuinRyokan.otaHalfBoardJPY
   const beppu1NightKRW = selectedBeppuRyokan.otaBreakfastKRW
@@ -151,6 +140,8 @@ function TravelJournal() {
     setCheckedItems((prev) => ({ ...prev, [id]: !prev[id] }))
   }
 
+  const completedChecklistCount = BABY_CHECKLIST.filter((i) => !!checkedItems[i.id]).length
+
   if (!user) {
     return null
   }
@@ -160,13 +151,12 @@ function TravelJournal() {
     active: boolean,
     onSelect: () => void,
     stayLabel: string,
-    nightsCount: number,
-    bannerMood: 'yufuin-fukuoka' | 'beppu-yufuin'
+    nightsCount: number
   ) => {
     const isYufuin = r.stayZone === 'yufuin-1n'
     const currentNightKRW = isYufuin ? r.otaHalfBoardKRW : r.otaBreakfastKRW
     const currentNightJPY = isYufuin ? r.otaHalfBoardJPY : r.otaBreakfastJPY
-    const stayPlanLabel = isYufuin ? '2식 올인클루시브 기준' : '조식 포함 기준'
+    const stayPlanLabel = isYufuin ? '석식+조식 2식 포함' : '조식 포함 (석식 자유)'
     const totalZoneKRW = currentNightKRW * nightsCount
 
     const googleMapsPlaceUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -177,93 +167,85 @@ function TravelJournal() {
       <div
         key={r.id}
         onClick={onSelect}
-        className={`border-2 transition cursor-pointer flex flex-col justify-between ${
-          active
-            ? 'border-[#191816] bg-[#EFECE4] shadow-sm'
-            : 'border-[#D8D1C5] bg-[#FAF8F4] hover:border-[#9E9689]'
+        className={`rounded-2xl border bg-white shadow-xs transition flex flex-col justify-between overflow-hidden ${
+          active ? 'border-blue-600 ring-2 ring-blue-600/15' : 'border-slate-200'
         }`}
       >
-        <div>
-          <DestinationShaderBanner regionId={bannerMood} />
-          <div className="p-5 sm:p-6 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-              <span className="px-2 py-0.5 bg-[#191816] text-[#E5C89B] font-semibold">
-                {stayLabel}
+        <div className="p-5 sm:p-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="px-3 py-1 rounded-lg bg-blue-600 text-white text-xs font-bold">
+              {stayLabel}
+            </span>
+            <span className="text-xs sm:text-sm text-slate-500 font-semibold">{r.jpName}</span>
+          </div>
+
+          {r.planPriorityBadge && (
+            <div className="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-xs sm:text-sm font-bold text-emerald-800">
+              {r.planPriorityBadge}
+            </div>
+          )}
+
+          <div>
+            <h4 className="text-lg sm:text-xl font-extrabold text-slate-900">{r.name}</h4>
+            <p className="text-xs sm:text-sm text-blue-700 font-semibold mt-1">{r.tag}</p>
+          </div>
+
+          <div className="border-t border-slate-200 pt-4 space-y-3 text-sm leading-relaxed text-slate-700">
+            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <span className="text-blue-700 font-bold block text-xs sm:text-sm mb-0.5">
+                🚉 역 · 리무진 접근성
               </span>
-              <span className="text-[#8C5A3C] font-medium">{r.jpName}</span>
+              <span className="font-medium text-slate-900">{r.stationAccess}</span>
             </div>
-
-            {r.planPriorityBadge && (
-              <div className="px-2.5 py-1 bg-[#FAF6EE] border border-[#D9C6A3] text-[11px] font-semibold text-[#8C5A3C]">
-                🎯 {r.planPriorityBadge}
-              </div>
-            )}
-
             <div>
-              <h4 className="font-serif-kr text-lg font-semibold text-[#191816]">{r.name}</h4>
-              <p className="text-xs text-[#8C5A3C] font-medium mt-1">{r.tag}</p>
+              <span className="text-xs font-bold text-slate-500 block">객실 구성 (성인 3인 + 13개월 아기)</span>
+              <span className="font-semibold text-slate-900">{r.roomType}</span>
             </div>
+            <div>
+              <span className="text-xs font-bold text-slate-500 block">온천 설비</span>
+              <span className="font-semibold text-slate-900">{r.bathType}</span>
+            </div>
+            <div>
+              <span className="text-xs font-bold text-slate-500 block">신청 식사 조건</span>
+              <span className="font-semibold text-emerald-700">{r.mealType}</span>
+            </div>
+            <div>
+              <span className="text-xs font-bold text-slate-500 block">13개월 유아 요금 정책</span>
+              <span className="font-semibold text-slate-900">{r.babyFeeNote}</span>
+            </div>
+          </div>
 
-            <div className="border-t border-[#DFD9CE] pt-3 space-y-2 text-xs leading-relaxed text-[#3D3A35]">
-              <div className="bg-[#FAF6EE] p-2.5 border border-[#E5DEC9]">
-                <span className="text-[#8C5A3C] font-semibold block">🚉 공항리무진 · JR 특급열차 접근성</span>
-                <span className="font-medium text-[#191816]">{r.stationAccess}</span>
-              </div>
-              <div>
-                <span className="text-[#78736A] block">객실 구성 (성인 3인 + 13개월 아기 1실)</span>
-                <span className="font-medium text-[#191816]">{r.roomType}</span>
-              </div>
-              <div>
-                <span className="text-[#78736A] block">온천 설비</span>
-                <span className="font-medium text-[#191816]">{r.bathType}</span>
-              </div>
-              <div>
-                <span className="text-[#78736A] block">식사 구성</span>
-                <span className="font-medium text-[#191816]">{r.mealType}</span>
-              </div>
-              <div>
-                <span className="text-[#78736A] block">13개월 유아 요금 정책 (소이네)</span>
-                <span className="font-medium text-[#8C5A3C]">{r.babyFeeNote}</span>
-              </div>
-            </div>
-
-            <div className="border-t border-[#DFD9CE] pt-3 space-y-1.5 text-xs text-[#4A4742]">
-              {r.babyPerks.map((perk, idx) => (
-                <p key={idx} className="leading-relaxed">
-                  • {perk}
-                </p>
-              ))}
-            </div>
+          <div className="border-t border-slate-200 pt-3.5 space-y-2 text-xs sm:text-sm text-slate-700">
+            <div className="font-bold text-slate-900">💡 아기 & 가족 이용 핵심 포인트</div>
+            {r.babyPerks.map((perk, idx) => (
+              <p key={idx} className="leading-relaxed">
+                • {perk}
+              </p>
+            ))}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="p-5 sm:p-6 pt-4 border-t border-[#DFD9CE] space-y-4 bg-[#F3EFE6]/60">
+        <div className="p-5 sm:p-6 pt-4 border-t border-slate-200 space-y-4 bg-slate-50">
           <div className="flex items-baseline justify-between">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-semibold text-[#191816]">
-                  {nightsCount}박 합계 ({stayPlanLabel})
-                </span>
-              </div>
-              <div className="text-lg font-bold text-[#191816] tabular-nums mt-0.5">
+              <span className="text-xs font-bold text-slate-500 block">
+                {nightsCount}박 합계 ({stayPlanLabel})
+              </span>
+              <div className="text-xl font-extrabold text-slate-900 tabular-nums mt-0.5">
                 {totalZoneKRW.toLocaleString()}원{' '}
-                <span className="text-xs font-normal text-[#78736A]">
+                <span className="text-xs sm:text-sm font-medium text-slate-500">
                   (1박 ¥{currentNightJPY.toLocaleString()})
                 </span>
               </div>
             </div>
-            <span
-              className={`text-xs font-semibold uppercase tracking-wider px-2.5 py-1 shrink-0 ${
-                active ? 'bg-[#191816] text-[#E5C89B]' : 'border border-[#191816] text-[#191816]'
-              }`}
-            >
-              {active ? '예약 확정 ✅' : '선택 ○'}
+            <span className="text-xs font-bold px-3 py-1.5 rounded-lg bg-emerald-600 text-white shrink-0">
+              예약 확정 ✅
             </span>
           </div>
 
           <div
-            className="pt-3 border-t border-[#DFD9CE] grid grid-cols-2 gap-2 text-[11px]"
+            className="grid grid-cols-2 gap-2.5 text-xs sm:text-sm"
             onClick={(e) => e.stopPropagation()}
           >
             {r.officialUrl && (
@@ -271,9 +253,9 @@ function TravelJournal() {
                 href={r.officialUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="py-2 px-2 text-center border border-[#191816] bg-[#191816] text-[#F6F3EC] hover:bg-[#33312E] transition font-medium"
+                className="py-2.5 px-3 rounded-xl text-center bg-slate-900 text-white hover:bg-slate-800 transition font-bold"
               >
-                공식 홈페이지 안내 ↗
+                공식 홈페이지 ↗
               </a>
             )}
             <a
@@ -282,9 +264,9 @@ function TravelJournal() {
               rel="noopener noreferrer"
               className={`${
                 r.officialUrl ? '' : 'col-span-2'
-              } py-2 px-2 text-center border border-[#8C5A3C] bg-[#FAF6EE] text-[#8C5A3C] hover:bg-[#8C5A3C] hover:text-white transition font-semibold`}
+              } py-2.5 px-3 rounded-xl text-center border border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white transition font-bold`}
             >
-              Google 지도 위치 보기 ↗
+              Google 지도 위치 ↗
             </a>
           </div>
         </div>
@@ -293,85 +275,40 @@ function TravelJournal() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F3EC] text-[#191816] pb-32 sm:pb-20">
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-28 sm:pb-16">
       {/* =================================================================
-          COVER — FULL-BLEED CINEMATIC WEBGPU SHADER + CONFIRMED HEADER
+          TOP BAR & COMPACT TRAVEL PASS HEADER
          ================================================================= */}
-      <header className="relative min-h-[68vh] sm:min-h-[75vh] flex flex-col justify-between bg-[#111110] text-[#F6F3EC] overflow-hidden">
-        <HeroOnsenShader mood={shaderMood} speedMultiplier={0.9} interactiveTrail={true} />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/85 pointer-events-none" />
-
-        {/* Top Masthead */}
-        <div className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-10 pt-6 sm:pt-8 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 border-b border-white/15 pb-4 sm:pb-5">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-baseline gap-3">
-              <span className="font-editorial text-lg sm:text-xl tracking-[0.2em] uppercase text-white">
-                OITA · YUFUIN · BEPPU
+      <header className="bg-white border-b border-slate-200">
+        {/* Top Utility Strip */}
+        <div className="border-b border-slate-100 bg-slate-900 text-white">
+          <div className="max-w-6xl mx-auto px-4 sm:px-8 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded-md bg-blue-600 text-white font-bold text-xs">
+                확정 여정 패스
               </span>
-              <span className="px-2 py-0.5 text-[10px] sm:text-xs bg-[#E5C89B] text-[#191816] font-bold uppercase tracking-wider">
-                확정 여정 마스터북
+              <span className="font-semibold text-slate-200">
+                2026. 12. 21 (월) – 12. 24 (목) · 3박 4일
               </span>
             </div>
 
-            <div className="flex items-center gap-1.5 md:hidden">
-              <span className="text-[11px] text-[#E5C89B] truncate max-w-[85px] font-medium">
-                {user.name}
-              </span>
-              <button
-                onClick={logout}
-                className="px-2 py-1 text-[10px] bg-white/10 hover:bg-white/20 text-white border border-white/20 cursor-pointer"
-              >
-                로그아웃
-              </button>
-              <button
-                onClick={handleSaveCurrentPlan}
-                className="px-2 py-1 text-[10px] bg-[#E5C89B] text-[#191816] font-semibold cursor-pointer"
-              >
-                💾 저장
-              </button>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
-            <div className="flex items-center gap-1.5 text-xs overflow-x-auto no-scrollbar py-0.5">
-              <span className="text-white/50 mr-1 hidden lg:inline tracking-wider uppercase text-[11px] shrink-0">
-                WebGPU:
-              </span>
-              {SHADER_MOOD_META.map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => setShaderMood(m.id)}
-                  className={`px-2 py-1 transition cursor-pointer text-[10px] sm:text-xs shrink-0 ${
-                    shaderMood === m.id
-                      ? 'bg-white text-[#191816] font-medium'
-                      : 'text-white/70 hover:text-white bg-white/10'
-                  }`}
-                >
-                  {m.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="hidden md:flex items-center gap-2.5 pl-2 border-l border-white/15">
-              <span className="text-xs text-white/90 font-medium flex items-center gap-1.5">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="flex items-center gap-1.5 text-slate-200">
                 <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                <span>
-                  <strong className="text-white">{user.name}</strong> 님
-                </span>
+                <strong>{user.name}</strong> 님
               </span>
-              <button
-                onClick={logout}
-                className="px-2.5 py-1 text-[11px] sm:text-xs bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border border-white/20 cursor-pointer transition"
-              >
-                로그아웃
-              </button>
               <button
                 onClick={handleSaveCurrentPlan}
                 disabled={isAuthLoading}
-                className="px-2.5 py-1 text-[11px] sm:text-xs bg-[#E5C89B] hover:bg-[#d9b882] text-[#191816] font-semibold cursor-pointer transition shadow-xs flex items-center gap-1"
+                className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs cursor-pointer transition"
               >
-                <span>💾</span>
-                <span>{lastSavedAt ? `저장됨 (${lastSavedAt})` : '플랜 저장'}</span>
+                💾 {lastSavedAt ? `저장됨 (${lastSavedAt})` : 'DB 저장'}
+              </button>
+              <button
+                onClick={logout}
+                className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 text-xs font-medium cursor-pointer transition"
+              >
+                로그아웃
               </button>
             </div>
           </div>
@@ -379,18 +316,18 @@ function TravelJournal() {
 
         {/* Notifications */}
         {saveStatusMsg && (
-          <div className="relative z-20 max-w-6xl mx-auto px-4 sm:px-10 pt-3">
+          <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-3">
             <div
-              className={`px-4 py-2 text-xs flex items-center justify-between border ${
+              className={`px-4 py-3 rounded-xl text-sm font-medium flex items-center justify-between border ${
                 saveStatusMsg.type === 'success'
-                  ? 'bg-emerald-950/90 text-emerald-200 border-emerald-500/50'
-                  : 'bg-rose-950/90 text-rose-200 border-rose-500/50'
+                  ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
+                  : 'bg-rose-50 text-rose-900 border-rose-200'
               }`}
             >
               <span>{saveStatusMsg.text}</span>
               <button
                 onClick={() => setSaveStatusMsg(null)}
-                className="text-white/70 hover:text-white font-mono ml-4 cursor-pointer"
+                className="text-slate-500 hover:text-slate-900 font-bold ml-4 cursor-pointer"
               >
                 ✕
               </button>
@@ -399,22 +336,22 @@ function TravelJournal() {
         )}
 
         {pendingSavedPlan && (
-          <div className="relative z-20 max-w-6xl mx-auto px-4 sm:px-10 pt-3">
-            <div className="px-4 py-2.5 bg-[#E5C89B]/95 text-[#191816] border border-[#d9b882] flex flex-wrap items-center justify-between gap-3 text-xs shadow-lg">
-              <div className="flex items-center gap-2">
-                <span className="font-bold">💡 이전 저장 플랜 발견:</span>
-                <span>Neon DB에 저장된 숙소·예산 설정이 있습니다.</span>
+          <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-3">
+            <div className="px-4 py-3 rounded-xl bg-blue-50 text-slate-900 border border-blue-200 flex flex-wrap items-center justify-between gap-3 text-sm">
+              <div>
+                <strong className="text-blue-800">💡 이전 저장 플랜 발견:</strong>{' '}
+                <span>Neon DB에 저장된 예산 설정이 있습니다.</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => applySavedPlan(pendingSavedPlan)}
-                  className="px-3 py-1 bg-[#191816] text-[#F6F3EC] font-semibold hover:bg-black cursor-pointer text-xs"
+                  className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 cursor-pointer text-xs"
                 >
                   불러오기
                 </button>
                 <button
                   onClick={() => setPendingSavedPlan(null)}
-                  className="px-2 py-1 text-[#191816]/70 hover:text-[#191816] text-xs cursor-pointer"
+                  className="px-2.5 py-1.5 text-slate-600 hover:text-slate-900 text-xs font-semibold cursor-pointer"
                 >
                   닫기
                 </button>
@@ -423,62 +360,88 @@ function TravelJournal() {
           </div>
         )}
 
-        {/* Center Title */}
-        <div className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-10 my-auto py-10 sm:py-14 pointer-events-none">
-          <div className="inline-flex flex-wrap items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-xs border border-white/20 text-[11px] sm:text-xs text-[#E5C89B] mb-4">
-            <span>✅ 제주항공 오이타 직항</span>
-            <span>·</span>
-            <span>♨️ 유후인 산스이칸 (1박 확정)</span>
-            <span>·</span>
-            <span>♨️ 온야도 노노 벳푸 (2박 확정)</span>
-          </div>
-          <h1 className="font-serif-kr text-2xl sm:text-4xl lg:text-[48px] font-normal leading-[1.3] text-white max-w-4xl">
-            유후인 산스이칸 1박 ➔ 온야도 노노 벳푸 2박
-            <br />
-            성인 3인 · 13개월 아기 최종 확정 여정표
-          </h1>
-          <p className="mt-4 sm:mt-5 text-xs sm:text-base text-white/85 max-w-2xl leading-relaxed font-light">
-            유후인역 도보 8분「산스이칸」과 벳푸역 도보 1분「온야도 노노」숙소 확정에 맞춰 전면 재설계한
-            3박 4일 실전 마스터북. 역세권 무료 짐보관, 13층 전세 가족탕 7개, 직통 특급열차 동선까지 빈틈없이 담았습니다.
-          </p>
-        </div>
+        {/* Main Summary Pass Header */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-5">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-bold text-blue-600">
+                <span>✈️ 제주항공 오이타 직항</span>
+                <span>·</span>
+                <span>🏨 유후인 산스이칸 1박(석식+조식)</span>
+                <span>·</span>
+                <span>🏨 온야도 노노 벳푸 2박(조식)</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900">
+                오이타 ➔ 유후인(1박) ➔ 벳푸(2박) 가족 여정표
+              </h1>
+              <p className="text-sm sm:text-base text-slate-600 max-w-3xl">
+                성인 3인 · 13개월 아기 루틴(<strong className="text-slate-900">08:00 아침 · 13:00 점심 · 18:00 저녁 · 20:00 취침</strong>)에 맞춰 가볍고 편안하게 재설계한 타임라인과 맛집·교통 가이드입니다.
+              </p>
+            </div>
 
-        {/* Bottom Metadata Strip */}
-        <div className="relative z-10 border-t border-white/15 bg-black/60 backdrop-blur-md">
-          <div className="max-w-6xl mx-auto px-4 sm:px-10 grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-white/15">
-            <div className="py-3 sm:py-4 pr-3 sm:pr-6">
-              <div className="text-[10px] sm:text-[11px] tracking-[0.15em] uppercase text-white/55">
-                Confirmed Flight
+            {/* Quick Routine Pill Box */}
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 sm:p-4 shrink-0">
+              <div className="text-xs font-bold text-amber-800 mb-1.5">
+                🍼 13개월 아기 고정 루틴 (전 일정 기준)
               </div>
-              <div className="text-xs sm:text-sm font-medium text-[#E5C89B] mt-0.5">
-                제주항공 오이타 직항 (7C1512/1511)
-              </div>
-            </div>
-            <div className="py-3 sm:py-4 pl-3 sm:px-6">
-              <div className="text-[10px] sm:text-[11px] tracking-[0.15em] uppercase text-white/55">
-                Confirmed Stay
-              </div>
-              <div className="text-xs sm:text-sm font-medium text-white mt-0.5">
-                산스이칸(1박) + 온야도 노노(2박)
-              </div>
-            </div>
-            <div className="py-3 sm:py-4 pr-3 sm:px-6">
-              <div className="text-[10px] sm:text-[11px] tracking-[0.15em] uppercase text-white/55">
-                Confirmed Transit
-              </div>
-              <div className="text-xs sm:text-sm font-medium text-white mt-0.5 truncate">
-                공항리무진 + JR 특급 + 역세권 도보
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div className="bg-white px-2.5 py-1.5 rounded-xl border border-amber-200/80">
+                  <div className="text-[11px] text-slate-500 font-medium">아침</div>
+                  <div className="text-xs sm:text-sm font-extrabold text-slate-900 font-mono">08:00</div>
+                </div>
+                <div className="bg-white px-2.5 py-1.5 rounded-xl border border-amber-200/80">
+                  <div className="text-[11px] text-slate-500 font-medium">점심</div>
+                  <div className="text-xs sm:text-sm font-extrabold text-slate-900 font-mono">13:00</div>
+                </div>
+                <div className="bg-white px-2.5 py-1.5 rounded-xl border border-amber-200/80">
+                  <div className="text-[11px] text-slate-500 font-medium">저녁</div>
+                  <div className="text-xs sm:text-sm font-extrabold text-slate-900 font-mono">18:00</div>
+                </div>
+                <div className="bg-slate-900 px-2.5 py-1.5 rounded-xl text-white">
+                  <div className="text-[11px] text-amber-300 font-medium">밤잠</div>
+                  <div className="text-xs sm:text-sm font-extrabold font-mono">20:00</div>
+                </div>
               </div>
             </div>
-            <div className="py-3 sm:py-4 pl-3 sm:pl-6">
-              <div className="text-[10px] sm:text-[11px] tracking-[0.15em] uppercase text-white/55">
-                Estimated Total (성인3+유아1)
+          </div>
+
+          {/* 4-Card Summary Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <div className="text-xs font-semibold text-slate-500">출국 · 귀국 직항</div>
+              <div className="text-sm sm:text-base font-bold text-slate-900 mt-0.5">
+                10:50 출국 / 13:55 귀국
               </div>
-              <div className="text-xs sm:text-base font-semibold text-[#E5C89B] mt-0.5 tabular-nums">
-                {totalBudgetKRW.toLocaleString()}원{' '}
-                <span className="text-[11px] text-white/60 block sm:inline font-normal">
-                  (1인 약 {Math.round(perAdultKRW / 10000)}만)
-                </span>
+              <div className="text-xs text-blue-600 font-medium mt-0.5">제주항공 7C1512 · 7C1511</div>
+            </div>
+
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <div className="text-xs font-semibold text-slate-500">Day 1 숙소 (12/21 월)</div>
+              <div className="text-sm sm:text-base font-bold text-slate-900 mt-0.5">
+                유후인 산스이칸 (1박)
+              </div>
+              <div className="text-xs text-emerald-700 font-semibold mt-0.5">
+                석식(18:00) + 조식(08:00) 포함
+              </div>
+            </div>
+
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <div className="text-xs font-semibold text-slate-500">Day 2–3 숙소 (12/22–24)</div>
+              <div className="text-sm sm:text-base font-bold text-slate-900 mt-0.5">
+                온야도 노노 벳푸 (2박)
+              </div>
+              <div className="text-xs text-emerald-700 font-semibold mt-0.5">
+                조식(08:00) 포함 · 전세탕 7곳
+              </div>
+            </div>
+
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-blue-50/70 border border-blue-200">
+              <div className="text-xs font-semibold text-blue-700">총 예상 비용 (성인3+유아1)</div>
+              <div className="text-sm sm:text-base font-extrabold text-slate-900 tabular-nums mt-0.5">
+                {totalBudgetKRW.toLocaleString()}원
+              </div>
+              <div className="text-xs text-slate-600 mt-0.5">
+                성인 1인당 약 {Math.round(perAdultKRW / 10000)}만 원
               </div>
             </div>
           </div>
@@ -486,807 +449,811 @@ function TravelJournal() {
       </header>
 
       {/* =================================================================
-          STICKY NAVIGATION BAR
+          STICKY 4-TAB WORKBENCH NAVIGATION
          ================================================================= */}
-      <nav className="sticky top-0 z-40 bg-[#F6F3EC]/95 backdrop-blur-md border-b border-[#191816]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-10 py-3 flex items-center justify-between gap-4 overflow-x-auto no-scrollbar">
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="w-2 h-2 rounded-full bg-[#8C5A3C]" />
-            <span className="text-xs sm:text-sm font-serif-kr font-semibold text-[#191816]">
-              확정 코스: 오이타 ➔ 산스이칸(1박) ➔ 온야도 노노(2박)
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3 sm:gap-6 text-xs font-medium text-[#5C5852] shrink-0">
-            <a href="#chapter-transit" className="hover:text-[#191816] transition">
-              01 항공·리무진·특급열차 시간표
-            </a>
-            <a href="#chapter-timeline" className="hover:text-[#191816] transition">
-              02 3박 4일 상세 일정표
-            </a>
-            <a href="#chapter-ryokan" className="hover:text-[#191816] transition">
-              03 확정 숙소 2곳 완벽 가이드
-            </a>
-            <a href="#chapter-folio" className="hover:text-[#191816] transition">
-              04 확정 견적·체크리스트
-            </a>
+      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
+        <div className="max-w-6xl mx-auto px-4 sm:px-8 py-2.5 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {(
+              [
+                { id: 'schedule', label: '📅 일자별 일정 & 지도' },
+                { id: 'meals', label: '🍽️ 식사 · 맛집 · 아기 루틴' },
+                { id: 'transit', label: '🚌 항공 · 교통 시간표' },
+                { id: 'stays-folio', label: '🏨 숙소 · 예산 · 체크리스트' },
+              ] as { id: MainTabId; label: string }[]
+            ).map((tab) => {
+              const active = mainTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    setMainTab(tab.id)
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }}
+                  className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition cursor-pointer ${
+                    active
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              )
+            })}
           </div>
         </div>
       </nav>
 
       {/* =================================================================
-          MAIN EDITORIAL CONTAINER
+          MAIN WORKBENCH CONTENT
          ================================================================= */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-10 divide-y divide-[#D8D1C5]">
+      <main className="max-w-6xl mx-auto px-4 sm:px-8 py-6 sm:py-10 space-y-8">
         {/* ---------------------------------------------------------------
-            CHAPTER 01 — CONFIRMED FLIGHT & TRANSIT TIMETABLE MASTER GUIDE
+            TAB 1: DAY-BY-DAY SCHEDULE & INTERACTIVE ROUTE MAP
            --------------------------------------------------------------- */}
-        <section id="chapter-transit" className="py-12 sm:py-18 scroll-mt-14 space-y-10">
-          <div className="space-y-3">
-            <div className="text-xs tracking-[0.2em] uppercase text-[#8C5A3C] font-semibold">
-              Chapter 01 — Confirmed Flight & Transit Master Plan
-            </div>
-            <h2 className="font-serif-kr text-2xl sm:text-3xl font-normal text-[#191816]">
-              예매 확정 제주항공 스케줄 & 리무진·특급열차 완벽 가이드
-            </h2>
-            <p className="text-sm text-[#5C5852] leading-relaxed">
-              성인 3명과 13개월 아기가 캐리어 3개·유모차 1대를 가지고 가장 덜 걷고, 환승 없이 이동할 수 있도록 설계된 구간별 실전 매뉴얼입니다.
-            </p>
-          </div>
-
-          {/* Confirmed Flight Summary Box */}
-          <div className="bg-white border-2 border-[#191816] p-5 sm:p-7 space-y-5">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#DFD9CE] pb-4">
-              <div className="flex items-center gap-2.5">
-                <span className="px-2.5 py-1 bg-[#191816] text-[#E5C89B] text-xs font-bold">
-                  항공권 확정 완료 ✅
-                </span>
-                <h3 className="font-serif-kr text-lg sm:text-xl font-semibold text-[#191816]">
-                  제주항공 (Jeju Air) · 인천(T1) ↔ 오이타(OIT) 직항
-                </h3>
-              </div>
-              <div className="text-xs sm:text-sm font-semibold text-[#8C5A3C]">
-                성인 3인 + 13개월 유아 1인 (무좌석 유아 · 유모차 도어투도어 무료 위탁)
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="p-4 bg-[#FAF8F4] border border-[#DFD9CE] space-y-1.5">
-                <div className="flex items-center justify-between text-xs text-[#8C5A3C] font-semibold">
-                  <span>🛫 출국편 · 2026. 12. 21 (월)</span>
-                  <span className="font-mono">편명: {CONFIRMED_FLIGHT.outboundFlight}</span>
-                </div>
-                <div className="text-base sm:text-lg font-bold text-[#191816] font-mono">
-                  10:50 인천(T1) 출발 ➔ 12:45 오이타 도착
-                </div>
-                <p className="text-xs text-[#5C5852]">
-                  • 08:30 인천공항 T1 도착 권장 · 유아 동반 교통약자 우대 출국통로(패스트트랙) 이용
-                  <br />• 12:45 착륙 후 입국심사 15분 컷 ➔ <strong>13:25 유후인행 리무진 버스 바로 탑승!</strong>
-                </p>
-              </div>
-
-              <div className="p-4 bg-[#FAF8F4] border border-[#DFD9CE] space-y-1.5">
-                <div className="flex items-center justify-between text-xs text-[#8C5A3C] font-semibold">
-                  <span>🛬 귀국편 · 2026. 12. 24 (목)</span>
-                  <span className="font-mono">편명: {CONFIRMED_FLIGHT.inboundFlight}</span>
-                </div>
-                <div className="text-base sm:text-lg font-bold text-[#191816] font-mono">
-                  13:55 오이타 출발 ➔ 15:50 인천(T1) 도착
-                </div>
-                <p className="text-xs text-[#5C5852]">
-                  • 10:05경 벳푸역 앞([B]노선, 도보 1분) 또는 10:20 키타하마(전 노선) 에어라이너 탑승 ➔ 11:03~11:10 공항 도착
-                  <br />• 공항 국내선 3층 「나나세」 식당가 점심(12:10) & 2층 수유실(아기 13:00 점심) · 1층 무료 족욕탕 체험 후 출국
-                </p>
-              </div>
-            </div>
-
-            <div className="grid sm:grid-cols-2 gap-3 pt-1 text-xs">
-              <div className="p-3 bg-[#F6FAF6] border border-[#D3E8D3] text-[#1F4A1F]">
-                <strong className="block mb-0.5 text-[#2D662D]">🧳 수하물 & 유모차 규정</strong>
-                {CONFIRMED_FLIGHT.baggageRule}
-              </div>
-              <div className="p-3 bg-[#FFFDF5] border border-[#F3E7C4] text-[#6D4C00]">
-                <strong className="block mb-0.5 text-[#A66700]">👶 공항 & 기내 아기 케어 핵심</strong>
-                유아 별도 위탁수하물(10kg)은 없으므로 아기 기저귀·여벌옷은 성인 캐리어 3개(총 45kg)에 나누어 담으세요.
-              </div>
-            </div>
-          </div>
-
-          {/* 4-Stage Transit Master Guide */}
-          <DynamicRouteMap />
-        </section>
-
-        {/* ---------------------------------------------------------------
-            CHAPTER 02 — CHRONOLOGICAL 4-DAY TIMELINE & INTERACTIVE ROUTE MAP
-           --------------------------------------------------------------- */}
-        <section id="chapter-timeline" className="py-12 sm:py-18 scroll-mt-14 space-y-10">
-          {/* Baby Routine (08/13/18/20) & 4-Day Meal Master Table */}
-          <div className="bg-white border-2 border-[#191816] p-5 sm:p-6 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#DFD9CE] pb-3">
-              <div>
-                <div className="text-[11px] tracking-[0.18em] uppercase text-[#8C5A3C] font-bold">
-                  Baby Routine & Verified Restaurant Guide (12/21 월 ~ 12/24 목)
-                </div>
-                <h3 className="font-serif-kr text-base sm:text-lg font-semibold text-[#191816] mt-0.5">
-                  🍼 아기 루틴(아침 08:00 · 점심 13:00 · 저녁 18:00 · 취침 20:00) & 4일 조·중·석식 마스터 표
-                </h3>
-              </div>
-              <span className="text-xs px-2.5 py-1 bg-[#191816] text-[#E5C89B] font-semibold">
-                산스이칸 2식 포함 · 온야도 노노 조식만 포함
-              </span>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4 text-xs">
-              {MEAL_AND_BABY_SCHEDULE.map((m) => (
-                <div key={m.day} className="p-4 border border-[#D8D1C5] bg-[#FAF8F4] space-y-2.5">
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#DFD9CE] pb-2">
-                    <span className="font-bold text-[#191816] text-sm">{m.dateLabel}</span>
-                    <span className="px-2 py-0.5 bg-[#EFECE4] border border-[#DFD9CE] text-[11px] font-semibold text-[#8C5A3C]">
-                      {m.stayInfo}
-                    </span>
-                  </div>
-
-                  <div className="space-y-1.5 text-[#3D3A35] leading-relaxed">
-                    <div className="flex items-start gap-2">
-                      <span className="px-1.5 py-0.5 bg-[#191816] text-[#F6F3EC] font-mono text-[10px] shrink-0 mt-0.5">
-                        조식 08:00
-                      </span>
-                      <div>
-                        <span className="font-semibold text-[#191816]">{m.breakfast.place}</span>
-                        {m.breakfast.included && (
-                          <span className="ml-1.5 text-[10px] text-emerald-700 font-bold">[숙소 포함]</span>
-                        )}
-                        <p className="text-[11px] text-[#5C5852]">{m.breakfast.note}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-2">
-                      <span className="px-1.5 py-0.5 bg-[#8C5A3C] text-white font-mono text-[10px] shrink-0 mt-0.5">
-                        중식 13:00
-                      </span>
-                      <div>
-                        <span className="font-semibold text-[#191816]">{m.lunch.primary}</span>
-                        <span className="ml-1.5 text-[10px] text-[#8C5A3C] font-semibold">
-                          (대안: {m.lunch.backup})
-                        </span>
-                        <p className="text-[11px] text-[#5C5852]">{m.lunch.babyNote}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-2">
-                      <span className="px-1.5 py-0.5 bg-[#29527A] text-white font-mono text-[10px] shrink-0 mt-0.5">
-                        석식 18:00
-                      </span>
-                      <div>
-                        <span className="font-semibold text-[#191816]">{m.dinner.primary}</span>
-                        {m.dinner.included ? (
-                          <span className="ml-1.5 text-[10px] text-emerald-700 font-bold">[숙소 포함]</span>
-                        ) : (
-                          <span className="ml-1.5 text-[10px] text-[#29527A] font-semibold">
-                            (대안: {m.dinner.backup})
-                          </span>
-                        )}
-                        <p className="text-[11px] text-[#5C5852]">{m.dinner.babyNote}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-[#DFD9CE] text-[11px] text-[#6D4C00] bg-[#FFFDF5] p-2">
-                    <strong>😴 20:00 취침 후:</strong> {m.bedtimeAndAdultTime}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Interactive Day-by-Day Route Map Visualizer */}
-          <DayRouteVisualizer
-            activeDayFilter={activeDayFilter}
-            onSelectDay={setActiveDayFilter}
-            selectedYufuinRyokan={selectedYufuinRyokan}
-            selectedBeppuRyokan={selectedBeppuRyokan}
-          />
-
-          <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-            {/* Left Sticky Column */}
-            <aside className="lg:col-span-4 lg:sticky lg:top-16 space-y-6">
-              <div className="space-y-2">
-                <div className="text-xs tracking-[0.2em] uppercase text-[#8C5A3C] font-semibold">
-                  Chapter 02 — Day-by-Day Schedule
-                </div>
-                <h2 className="font-serif-kr text-2xl sm:text-3xl font-normal text-[#191816] leading-snug">
-                  산스이칸 1박 + 온야도 노노 2박
-                  <br />
-                  분 단위 실전 타임라인
-                </h2>
-                <p className="text-xs sm:text-sm text-[#5C5852] leading-relaxed">
-                  오이타 공항 리무진과 JR 특급열차 실제 출발 시각, 역세권 무료 짐보관, 13개월 아기 낮잠 및 어른 3인 교대 온천 시간을 맞춘 최종 일정표입니다.
-                </p>
-              </div>
-
-              {/* Mobile Day Filter Pills */}
-              <div className="flex lg:hidden items-center gap-2 overflow-x-auto no-scrollbar py-1">
-                <button
-                  onClick={() => setActiveDayFilter('all')}
-                  className={`px-3.5 py-2 text-xs transition cursor-pointer whitespace-nowrap shrink-0 ${
-                    activeDayFilter === 'all'
-                      ? 'bg-[#191816] text-[#F6F3EC] font-semibold'
-                      : 'bg-[#EFECE4] text-[#78736A] border border-[#DFD9CE]'
-                  }`}
-                >
-                  전체 일정 (Day 1–4)
-                </button>
-                {currentRegion.days.map((d) => (
-                  <button
-                    key={d.day}
-                    onClick={() => setActiveDayFilter(d.day)}
-                    className={`px-3.5 py-2 text-xs transition cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
-                      activeDayFilter === d.day
-                        ? 'bg-[#191816] text-[#F6F3EC] font-semibold'
-                        : 'bg-[#EFECE4] text-[#78736A] border border-[#DFD9CE]'
-                    }`}
-                  >
-                    <span>Day 0{d.day}</span>
-                    <span className="text-[10px] text-[#8C5A3C]">({d.stayBadge})</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Desktop Day Filter List */}
-              <div className="hidden lg:block border-y border-[#191816] divide-y divide-[#DFD9CE]">
-                <button
-                  onClick={() => setActiveDayFilter('all')}
-                  className={`w-full py-3 px-2 text-left flex items-center justify-between text-sm transition cursor-pointer ${
-                    activeDayFilter === 'all'
-                      ? 'font-semibold text-[#191816]'
-                      : 'text-[#78736A] hover:text-[#191816]'
-                  }`}
-                >
-                  <span>전체 일정 연속 보기 (Day 01 – 04)</span>
-                  <span className="font-editorial italic">{activeDayFilter === 'all' ? '●' : '○'}</span>
-                </button>
-                {currentRegion.days.map((d) => (
-                  <button
-                    key={d.day}
-                    onClick={() => setActiveDayFilter(d.day)}
-                    className={`w-full py-3 px-2 text-left flex items-center justify-between text-sm transition cursor-pointer ${
-                      activeDayFilter === d.day
-                        ? 'font-semibold text-[#191816]'
-                        : 'text-[#78736A] hover:text-[#191816]'
-                    }`}
-                  >
-                    <span>
-                      <strong className="font-editorial italic mr-2">Day 0{d.day}</strong>
-                      {d.date}
-                    </span>
-                    <span className="text-xs px-2 py-0.5 bg-[#EFECE4] text-[#8C5A3C] font-medium">
-                      {d.stayBadge}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Route Overview Box */}
-              <div className="p-5 bg-[#EFECE4] border border-[#191816] space-y-4">
-                <div className="text-xs tracking-[0.15em] uppercase text-[#191816] font-bold border-b border-[#D8D1C5] pb-2">
-                  3박 4일 전체 동선 요약
-                </div>
-                <div className="relative pl-5 border-l border-[#8C5A3C] space-y-4">
-                  {currentRegion.routeNodes.map((node) => (
-                    <div key={node.step} className="relative text-xs">
-                      <span className="absolute -left-[24px] top-1 w-2.5 h-2.5 rounded-full bg-[#191816]" />
-                      <div className="font-semibold text-[#191816]">{node.place}</div>
-                      <div className="text-[#5C5852] mt-0.5">{node.stayOrStop}</div>
-                      {node.modeToNext && (
-                        <div className="mt-1 inline-block px-2 py-0.5 bg-white border border-[#DFD9CE] text-[11px] font-medium text-[#8C5A3C]">
-                          ↓ {node.modeToNext} ({node.durationToNext})
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </aside>
-
-            {/* Right Column: Detailed Day Cards */}
-            <div className="lg:col-span-8 space-y-12 sm:space-y-16">
-              {currentRegion.days
-                .filter((d) => activeDayFilter === 'all' || d.day === activeDayFilter)
-                .map((dayPlan) => (
-                  <div key={dayPlan.day} className="space-y-6 sm:space-y-8">
-                    <div className="border-b-2 border-[#191816] pb-4 sm:pb-5 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          <span className="font-editorial text-3xl sm:text-4xl font-normal text-[#191816]">
-                            Day 0{dayPlan.day}
-                          </span>
-                          <span className="text-xs sm:text-sm tracking-widest uppercase text-[#8C5A3C] font-semibold">
-                            {dayPlan.date}
-                          </span>
-                          <span className="px-2.5 py-0.5 bg-[#191816] text-[#E5C89B] text-xs font-semibold">
-                            {dayPlan.stayBadge}
-                          </span>
-                        </div>
-                        <h3 className="font-serif-kr text-lg sm:text-2xl font-medium text-[#191816] mt-2">
-                          {dayPlan.theme}
-                        </h3>
-                      </div>
-                      <div className="text-xs text-[#5C5852] sm:text-right shrink-0 space-y-1.5">
-                        <div className="font-semibold text-[#191816]">
-                          일일 대중교통/택시 탑승: 총 {dayPlan.totalTransitMinutes}분
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveDayFilter(dayPlan.day)
-                            document.getElementById('chapter-timeline')?.scrollIntoView({ behavior: 'smooth' })
-                          }}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#191816] text-[#E5C89B] text-[11px] font-semibold hover:bg-[#33312E] transition cursor-pointer"
-                        >
-                          <span>🗺️ Day 0{dayPlan.day} 지도 경로 포커스</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="bg-[#EFECE4] px-4 py-2.5 border border-[#DFD9CE] text-xs text-[#3D3A35] font-medium flex flex-wrap items-center justify-between gap-2">
-                      <span>📍 동선 흐름: {dayPlan.routeSummary}</span>
-                    </div>
-
-                    <div className="relative pl-5 sm:pl-8 border-l border-[#C8C1B4] space-y-10 sm:space-y-12">
-                      {dayPlan.items.map((item, idx) => (
-                        <article key={idx} className="relative space-y-3">
-                          <span className="absolute -left-[25.5px] sm:-left-[37px] top-1.5 w-2.5 h-2.5 rounded-full bg-[#191816] ring-4 ring-[#F6F3EC]" />
-
-                          <div className="flex flex-wrap items-baseline justify-between gap-2">
-                            <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
-                              <span className="font-mono text-xs sm:text-sm font-bold tracking-tight text-[#8C5A3C] bg-[#EFECE4] px-2 py-0.5 border border-[#DFD9CE]">
-                                {item.time}
-                              </span>
-                              <span className="text-xs font-semibold text-[#5C5852]">
-                                📍 {item.place}
-                              </span>
-                            </div>
-
-                            <div className="flex items-center gap-2 text-[11px] sm:text-xs text-[#5C5852]">
-                              <span>유모차: {item.strollerFriendly}</span>
-                              {item.costKRW && (
-                                <>
-                                  <span>|</span>
-                                  <span className="font-semibold text-[#191816]">{item.costKRW}</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-
-                          <h4 className="font-serif-kr text-base sm:text-xl font-semibold text-[#191816]">
-                            {item.title}
-                          </h4>
-
-                          <p className="text-sm sm:text-[15px] text-[#33312E] leading-[1.75]">
-                            {item.desc}
-                          </p>
-
-                          {/* Timetable & Luggage Badges */}
-                          {(item.timetableNote || item.luggageNote) && (
-                            <div className="grid sm:grid-cols-2 gap-2.5 text-xs">
-                              {item.timetableNote && (
-                                <div className="p-2.5 bg-white border border-[#DFD9CE]">
-                                  <span className="font-semibold text-[#8C5A3C] block mb-0.5">
-                                    🕒 시간표 · 탑승 메모
-                                  </span>
-                                  <span className="text-[#191816] font-medium">{item.timetableNote}</span>
-                                </div>
-                              )}
-                              {item.luggageNote && (
-                                <div className="p-2.5 bg-white border border-[#DFD9CE]">
-                                  <span className="font-semibold text-[#2D662D] block mb-0.5">
-                                    🧳 캐리어 3개 · 유모차 상태
-                                  </span>
-                                  <span className="text-[#191816]">{item.luggageNote}</span>
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Baby & Adult Tips */}
-                          <div className="grid sm:grid-cols-2 gap-3 pt-2 text-xs leading-relaxed">
-                            <div className="p-3 bg-[#FFFDF5] border border-[#F3E7C4]">
-                              <div className="text-[11px] uppercase text-[#A66700] font-semibold mb-1">
-                                👶 13개월 아기 케어 팁
-                              </div>
-                              <p className="text-[#4A4742]">{item.babyTip}</p>
-                            </div>
-
-                            {item.adultTip && (
-                              <div className="p-3 bg-[#F6F8FB] border border-[#D5E1F0]">
-                                <div className="text-[11px] uppercase text-[#29527A] font-semibold mb-1">
-                                  👨‍👩‍👧 어른 3인 분담 & 힐링 포인트
-                                </div>
-                                <p className="text-[#4A4742]">{item.adultTip}</p>
-                              </div>
-                            )}
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ---------------------------------------------------------------
-            CHAPTER 03 — CONFIRMED ACCOMMODATIONS GUIDE
-           --------------------------------------------------------------- */}
-        <section id="chapter-ryokan" className="py-12 sm:py-18 scroll-mt-14 space-y-12">
-          <div className="space-y-3">
-            <div className="text-xs tracking-[0.2em] uppercase text-[#8C5A3C] font-semibold">
-              Chapter 03 — Confirmed Accommodations Master Guide
-            </div>
-            <h2 className="font-serif-kr text-2xl sm:text-3xl font-normal text-[#191816]">
-              [확정 숙소] 유후인 산스이칸(1박) + 온야도 노노 벳푸(2박)
-            </h2>
-            <p className="text-sm text-[#5C5852]">
-              확정된 두 숙소의 <strong>역세권 동선·짐보관·온천 설비·아기 케어 포인트</strong>를 한눈에 확인해 보세요.
-            </p>
-          </div>
-
-          {/* Confirmed 2 Stays Quick Action Playbook */}
-          <div className="bg-white border-2 border-[#191816] p-5 sm:p-6 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#DFD9CE] pb-3">
-              <div>
-                <div className="text-[11px] tracking-[0.18em] uppercase text-[#8C5A3C] font-bold">
-                  Confirmed Stays Playbook (12/21 ~ 12/24)
-                </div>
-                <h3 className="font-serif-kr text-base sm:text-lg font-semibold text-[#191816] mt-0.5">
-                  ✅ 확정 숙소 2곳 핵심 이용 가이드 (체크인 · 온천 · 아기 케어 · 무료 특전)
-                </h3>
-              </div>
-              <span className="text-xs px-2.5 py-1 bg-[#191816] text-[#E5C89B] font-semibold">
-                성인 3인 + 13개월 유아(소이네)
-              </span>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4 text-xs">
-              <div className="p-4 border border-[#D8D1C5] bg-[#FAF8F4] space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-[#8C5A3C]">Day 1 (12/21 월 · 1박)</span>
-                  <span className="px-2 py-0.5 bg-[#191816] text-[#E5C89B] text-[10px] font-semibold">
-                    예약 확정 ✅
-                  </span>
-                </div>
-                <div className="font-serif-kr text-base font-semibold text-[#191816]">
-                  유후인 산스이칸 (ゆふいん山水館)
-                </div>
-                <ul className="space-y-1 text-[#3D3A35] leading-relaxed">
-                  <li>• <strong>식사 조건:</strong> <strong>석식(18:00) + 조식(08:00) 2식 포함 확정 ✅</strong> (와규 뷔페 · 주류 무제한)</li>
-                  <li>• <strong>위치·짐:</strong> 유후인역 평지 도보 8분 · 도착 즉시 프런트 무료 짐보관 (도보 2분 맥스밸류 마트)</li>
-                  <li>• <strong>온천·취침:</strong> 별도 전세탕 없음 → <strong>19:15 아기 객실 욕실 목욕 → 20:00 취침</strong> · 어른 교대 노천 대욕장</li>
-                  <li>• <strong>무료 특전:</strong> 라운지 주류·안주(15:00~24:00), 소프트드링크·아이스크림(15:00~10:00)</li>
-                </ul>
-              </div>
-
-              <div className="p-4 border border-[#D8D1C5] bg-[#FAF8F4] space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-[#8C5A3C]">Day 2~3 (12/22 화~24 목 · 2박 연박)</span>
-                  <span className="px-2 py-0.5 bg-[#191816] text-[#E5C89B] text-[10px] font-semibold">
-                    예약 확정 ✅
-                  </span>
-                </div>
-                <div className="font-serif-kr text-base font-semibold text-[#191816]">
-                  온야도 노노 벳푸 (別府八湯 御宿 野乃別府)
-                </div>
-                <ul className="space-y-1 text-[#3D3A35] leading-relaxed">
-                  <li>• <strong>식사 조건:</strong> <strong>조식(08:00 카이센동 뷔페)만 포함 확정 ✅</strong> · 중·석식은 도보 2~10분 벳푸 맛집 이용</li>
-                  <li>• <strong>위치·짐:</strong> JR 벳푸역 동쪽 출구 도보 1분 · 하차 직후 무료 짐보관 · 전 관내 맨발 다다미(만 0~2세 무료)</li>
-                  <li>• <strong>온천 팩트:</strong> <strong>13층 무료 전세 가족탕 7개</strong>(예약 없이 선착순·객실 TV 공실 확인) → 아기 첫 천연 온천 최적!</li>
-                  <li>• <strong>20시 취침 후:</strong> 무료 요나키 소바(21:30~23:00), 도보 8분 돈키호테(새벽 2시), 무료 아이스크림/유산균</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* CONFIRMED 2 STAYS SIDE-BY-SIDE */}
-          <div className="space-y-5">
-            <div className="border-l-4 border-[#8C5A3C] pl-4">
-              <div className="text-xs font-semibold uppercase tracking-wider text-[#8C5A3C]">
-                Confirmed Stays · 12월 21일(월) ~ 24일(목) · 3박 4일
-              </div>
-              <h3 className="font-serif-kr text-xl sm:text-2xl font-medium text-[#191816] mt-0.5">
-                확정 숙소 상세 브리핑 — 유후인 산스이칸(1박) & 온야도 노노 벳푸(2박)
-              </h3>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              {YUFUIN_RYOKANS.map((r) =>
-                renderRyokanCard(
-                  r,
-                  r.id === selectedYufuinRyokanId,
-                  () => setSelectedYufuinRyokanId(r.id),
-                  '유후인 1박 확정 (Day 1)',
-                  1,
-                  'yufuin-fukuoka'
-                )
-              )}
-              {BEPPU_RYOKANS.map((r) =>
-                renderRyokanCard(
-                  r,
-                  r.id === selectedBeppuRyokanId,
-                  () => setSelectedBeppuRyokanId(r.id),
-                  '벳푸 2박 연박 확정 (Day 2–3)',
-                  2,
-                  'beppu-yufuin'
-                )
-              )}
-            </div>
-          </div>
-
-          {/* Booking Insider Tips */}
-          <div className="p-5 sm:p-8 bg-[#EFECE4] border-y border-[#191816] space-y-5">
-            <div className="border-b border-[#D8D1C5] pb-3">
-              <div className="text-xs tracking-[0.18em] uppercase text-[#8C5A3C] font-semibold">
-                Confirmed Stay & Transit Playbook
-              </div>
-              <h4 className="font-serif-kr text-base sm:text-lg font-medium text-[#191816] mt-1">
-                유후인 산스이칸 · 온야도 노노 벳푸 200% 활용 실전 팁
-              </h4>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              {OTA_BOOKING_GUIDE.map((tip) => (
-                <div key={tip.step} className="space-y-1.5">
-                  <div className="font-editorial italic text-base text-[#8C5A3C]">
-                    Tip {tip.step}.
-                  </div>
-                  <h5 className="font-serif-kr text-sm sm:text-[15px] font-semibold text-[#191816] leading-snug">
-                    {tip.title}
-                  </h5>
-                  <p className="text-xs sm:text-[13px] text-[#4A4742] leading-relaxed">
-                    {tip.desc}
+        {mainTab === 'schedule' && (
+          <section className="space-y-6">
+            {/* Day Selector Bar + Map Toggle */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg sm:text-xl font-extrabold text-slate-900">
+                    일자별 상세 타임라인
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-600">
+                    원하는 날짜를 선택해 하루 일정을 크고 선명하게 확인하세요.
                   </p>
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
 
-        {/* ---------------------------------------------------------------
-            CHAPTER 04 — CONFIRMED FOLIO & CHECKLIST
-           --------------------------------------------------------------- */}
-        <section id="chapter-folio" className="py-12 sm:py-18 scroll-mt-14">
-          <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-            {/* Left 7 Cols: Checklist & Transit Breakdown */}
-            <div className="lg:col-span-7 space-y-8">
-              {/* Transit Cost Detailed Table */}
-              <div className="bg-[#EFECE4] border border-[#191816] p-5 sm:p-6 space-y-4">
-                <div className="flex items-baseline justify-between border-b border-[#D8D1C5] pb-3">
-                  <div>
-                    <div className="text-xs tracking-wider uppercase text-[#8C5A3C] font-semibold">
-                      Transit Expense Breakdown
-                    </div>
-                    <h3 className="font-serif-kr text-lg font-semibold text-[#191816]">
-                      리무진 · JR 특급열차 · 벳푸 시내 택시 실비 상세 내역 (4인 합계)
-                    </h3>
-                  </div>
-                  <span className="text-sm font-bold text-[#191816] tabular-nums">
-                    총 ¥{CONFIRMED_TRANSIT_COST.totalJPY.toLocaleString()} (약 {CONFIRMED_TRANSIT_COST.totalKRW.toLocaleString()}원)
-                  </span>
-                </div>
-
-                <div className="divide-y divide-[#DFD9CE] text-xs">
-                  {CONFIRMED_TRANSIT_COST.items.map((tItem, idx) => (
-                    <div key={idx} className="py-2.5 flex items-start justify-between gap-3">
-                      <div>
-                        <div className="font-semibold text-[#191816]">{tItem.label}</div>
-                        <div className="text-[11px] text-[#5C5852] mt-0.5">{tItem.note}</div>
-                      </div>
-                      <div className="text-right tabular-nums shrink-0">
-                        <div className="font-semibold text-[#191816]">{tItem.krw.toLocaleString()}원</div>
-                        <div className="text-[11px] text-[#78736A]">¥{tItem.jpy.toLocaleString()}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowRouteMap((prev) => !prev)}
+                  className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border transition cursor-pointer self-start sm:self-auto ${
+                    showRouteMap
+                      ? 'bg-slate-900 text-white border-slate-900'
+                      : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                  }`}
+                >
+                  {showRouteMap ? '🗺️ 지도 접기' : '🗺️ 지도 펼치기'}
+                </button>
               </div>
 
-              {/* Checklist */}
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <div className="text-xs tracking-[0.2em] uppercase text-[#8C5A3C] font-semibold">
-                    Chapter 04 — Essential Checklist
-                  </div>
-                  <h2 className="font-serif-kr text-xl sm:text-2xl font-normal text-[#191816]">
-                    출국 전 필수 점검 사항 (이유식 검역 · 리무진 · 온천 수칙)
-                  </h2>
-                </div>
-
-                <div className="border-t border-[#191816] divide-y divide-[#DFD9CE]">
-                  {BABY_CHECKLIST.map((item) => {
-                    const checked = !!checkedItems[item.id]
-                    return (
-                      <div
-                        key={item.id}
-                        onClick={() => toggleCheck(item.id)}
-                        className="py-4 flex items-start gap-3 sm:gap-4 cursor-pointer group active:bg-[#EFECE4]/70"
-                      >
-                        <span className="font-mono text-base mt-0.5 text-[#8C5A3C] shrink-0">
-                          {checked ? '[✓]' : '[ ]'}
+              {/* Day Tabs */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {currentRegion.days.map((d) => {
+                  const active = activeDayFilter === d.day
+                  return (
+                    <button
+                      key={d.day}
+                      type="button"
+                      onClick={() => setActiveDayFilter(d.day)}
+                      className={`p-3 rounded-xl text-left border transition cursor-pointer ${
+                        active
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                          : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between text-xs font-bold">
+                        <span>Day 0{d.day}</span>
+                        <span className={active ? 'text-blue-100' : 'text-slate-500'}>
+                          {d.date}
                         </span>
-                        <div className="space-y-1">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="text-[10px] sm:text-[11px] tracking-wider uppercase text-[#78736A]">
-                              {item.category}
+                      </div>
+                      <div
+                        className={`text-xs sm:text-sm font-bold truncate mt-1 ${
+                          active ? 'text-white' : 'text-slate-900'
+                        }`}
+                      >
+                        {d.stayBadge}
+                      </div>
+                    </button>
+                  )
+                })}
+                <button
+                  type="button"
+                  onClick={() => setActiveDayFilter('all')}
+                  className={`p-3 rounded-xl text-left border transition cursor-pointer flex flex-col justify-between ${
+                    activeDayFilter === 'all'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                      : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
+                  }`}
+                >
+                  <div className="text-xs font-bold">전체 4일 보기</div>
+                  <div className="text-xs sm:text-sm font-bold mt-1">Day 1 ~ 4 연속</div>
+                </button>
+              </div>
+            </div>
+
+            {/* Collapsible Interactive Map */}
+            {showRouteMap && (
+              <DayRouteVisualizer
+                activeDayFilter={activeDayFilter}
+                onSelectDay={setActiveDayFilter}
+                selectedYufuinRyokan={selectedYufuinRyokan}
+                selectedBeppuRyokan={selectedBeppuRyokan}
+              />
+            )}
+
+            {/* Day Schedule Cards */}
+            <div className="space-y-8">
+              {currentRegion.days
+                .filter((d) => activeDayFilter === 'all' || d.day === activeDayFilter)
+                .map((dayPlan) => {
+                  const dayMeal = MEAL_AND_BABY_SCHEDULE.find((m) => m.day === dayPlan.day)
+
+                  return (
+                    <div
+                      key={dayPlan.day}
+                      className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden"
+                    >
+                      {/* Day Header Banner */}
+                      <div className="bg-slate-900 text-white p-5 sm:p-6 space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex flex-wrap items-center gap-2.5">
+                            <span className="px-3 py-1 rounded-lg bg-blue-600 text-white text-sm font-extrabold">
+                              Day 0{dayPlan.day}
                             </span>
-                            {item.critical && (
-                              <span className="text-[10px] sm:text-[11px] tracking-wider uppercase text-[#A64B2A] font-semibold">
-                                · 중요 필수
-                              </span>
-                            )}
+                            <span className="text-sm sm:text-base font-bold text-slate-200">
+                              {dayPlan.date}
+                            </span>
+                            <span className="px-2.5 py-1 rounded-lg bg-white/15 text-amber-300 text-xs font-bold">
+                              {dayPlan.stayBadge}
+                            </span>
                           </div>
-                          <h3
-                            className={`text-sm sm:text-base font-medium ${
-                              checked ? 'line-through text-[#9E9689]' : 'text-[#191816]'
-                            }`}
-                          >
-                            {item.title}
-                          </h3>
-                          <p className="text-xs sm:text-sm text-[#4A4742] leading-relaxed">{item.detail}</p>
+                          <span className="text-xs sm:text-sm text-slate-300 font-medium">
+                            ⏱ 일일 대중교통·택시 탑승: 총 {dayPlan.totalTransitMinutes}분
+                          </span>
+                        </div>
+
+                        <h3 className="text-lg sm:text-2xl font-extrabold text-white leading-snug">
+                          {dayPlan.theme}
+                        </h3>
+
+                        <div className="text-xs sm:text-sm text-slate-300 bg-white/10 px-3.5 py-2.5 rounded-xl">
+                          📍 <strong>동선 흐름:</strong> {dayPlan.routeSummary}
                         </div>
                       </div>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
 
-            {/* Right 5 Cols: Bespoke Hotel Folio */}
-            <div className="lg:col-span-5 lg:sticky lg:top-16 bg-[#191816] text-[#F6F3EC] p-5 sm:p-8 space-y-6">
-              <div className="border-b border-white/15 pb-4 flex items-baseline justify-between">
+                      {/* Today's 3-Meal & Baby Bedtime Quick Strip */}
+                      {dayMeal && (
+                        <div className="bg-amber-50/70 border-b border-slate-200 p-4 sm:px-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs sm:text-sm">
+                          <div className="bg-white p-3 rounded-xl border border-amber-200/80">
+                            <div className="flex items-center justify-between font-bold text-slate-900">
+                              <span>🍼 조식 08:00</span>
+                              {dayMeal.breakfast.included && (
+                                <span className="text-[11px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                                  숙소포함
+                                </span>
+                              )}
+                            </div>
+                            <div className="font-semibold text-slate-800 mt-1">
+                              {dayMeal.breakfast.place}
+                            </div>
+                          </div>
+
+                          <div className="bg-white p-3 rounded-xl border border-amber-200/80">
+                            <div className="flex items-center justify-between font-bold text-slate-900">
+                              <span>🍚 중식 13:00</span>
+                              <span className="text-[11px] text-amber-800 font-semibold">
+                                {dayMeal.lunch.time}
+                              </span>
+                            </div>
+                            <div className="font-semibold text-blue-700 mt-1">
+                              {dayMeal.lunch.primary}
+                            </div>
+                          </div>
+
+                          <div className="bg-white p-3 rounded-xl border border-amber-200/80">
+                            <div className="flex items-center justify-between font-bold text-slate-900">
+                              <span>🍽️ 석식 18:00</span>
+                              {dayMeal.dinner.included ? (
+                                <span className="text-[11px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                                  숙소포함
+                                </span>
+                              ) : (
+                                <span className="text-[11px] text-blue-700 font-semibold">
+                                  외식 추천
+                                </span>
+                              )}
+                            </div>
+                            <div className="font-semibold text-slate-800 mt-1">
+                              {dayMeal.dinner.primary}
+                            </div>
+                          </div>
+
+                          <div className="bg-slate-900 text-white p-3 rounded-xl">
+                            <div className="font-bold text-amber-300">😴 20:00 아기 취침 후</div>
+                            <div className="text-xs text-slate-200 mt-1 leading-snug">
+                              {dayMeal.bedtimeAndAdultTime}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Timeline Items */}
+                      <div className="p-5 sm:p-7 divide-y divide-slate-200 space-y-6">
+                        {dayPlan.items.map((item, idx) => (
+                          <article
+                            key={idx}
+                            className={`${idx > 0 ? 'pt-6' : ''} space-y-3.5`}
+                          >
+                            {/* Time & Meta Row */}
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-mono text-sm sm:text-base font-extrabold text-white bg-blue-600 px-3 py-1 rounded-lg">
+                                  {item.time}
+                                </span>
+                                <span className="text-xs sm:text-sm font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
+                                  📍 {item.place}
+                                </span>
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+                                <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-semibold">
+                                  유모차: {item.strollerFriendly}
+                                </span>
+                                {item.costKRW && (
+                                  <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold">
+                                    {item.costKRW}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Title & Description */}
+                            <h4 className="text-lg sm:text-xl font-extrabold text-slate-900 leading-snug">
+                              {item.title}
+                            </h4>
+
+                            <p className="text-sm sm:text-base text-slate-700 leading-relaxed">
+                              {item.desc}
+                            </p>
+
+                            {/* Timetable & Luggage Info */}
+                            {(item.timetableNote || item.luggageNote) && (
+                              <div className="grid sm:grid-cols-2 gap-3 text-xs sm:text-sm">
+                                {item.timetableNote && (
+                                  <div className="p-3.5 rounded-xl bg-blue-50/60 border border-blue-200">
+                                    <span className="font-bold text-blue-800 block mb-1">
+                                      🕒 시간표 · 추천 식당 메모
+                                    </span>
+                                    <span className="text-slate-800 font-medium leading-relaxed">
+                                      {item.timetableNote}
+                                    </span>
+                                  </div>
+                                )}
+                                {item.luggageNote && (
+                                  <div className="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200">
+                                    <span className="font-bold text-emerald-800 block mb-1">
+                                      🧳 캐리어 3개 · 유모차 상태
+                                    </span>
+                                    <span className="text-slate-800 font-medium leading-relaxed">
+                                      {item.luggageNote}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Baby & Adult Tips */}
+                            <div className="grid sm:grid-cols-2 gap-3 text-xs sm:text-sm leading-relaxed">
+                              <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200">
+                                <div className="font-bold text-amber-900 mb-1">
+                                  👶 13개월 아기 케어 팁
+                                </div>
+                                <p className="text-slate-800">{item.babyTip}</p>
+                              </div>
+
+                              {item.adultTip && (
+                                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                                  <div className="font-bold text-slate-900 mb-1">
+                                    👨‍👩‍👧 어른 3인 분담 & 힐링 포인트
+                                  </div>
+                                  <p className="text-slate-700">{item.adultTip}</p>
+                                </div>
+                              )}
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+            </div>
+          </section>
+        )}
+
+        {/* ---------------------------------------------------------------
+            TAB 2: MEAL & BABY ROUTINE MASTER TABLE
+           --------------------------------------------------------------- */}
+        {mainTab === 'meals' && (
+          <section className="space-y-6">
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-7 shadow-xs space-y-6">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
                 <div>
-                  <div className="text-[11px] tracking-[0.2em] uppercase text-[#E5C89B]">
-                    Confirmed Travel Folio
-                  </div>
-                  <h3 className="font-serif-kr text-lg sm:text-xl font-normal text-white mt-1">
-                    확정 여정 총 견적 명세서
-                  </h3>
+                  <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                    Baby Routine & Verified Restaurant Guide
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">
+                    🍼 아기 식사·수면 루틴(08·13·18·20시) & 4일 조·중·석식 맛집 총정리
+                  </h2>
+                  <p className="text-sm text-slate-600 mt-1">
+                    산스이칸(석식+조식 포함)과 온야도 노노(조식만 포함) 조건에 맞춰 영업시간·휴무일까지 검증된 식당표입니다.
+                  </p>
                 </div>
-                <span className="text-xs text-white/60">성인 3 · 유아 1</span>
+                <span className="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs sm:text-sm font-bold">
+                  12/21(월) ~ 12/24(목) 요일별 영업 확인 완료
+                </span>
               </div>
 
-              <div className="space-y-4 text-xs sm:text-sm divide-y divide-white/10">
-                <div className="pt-2 flex justify-between items-start gap-3">
-                  <div>
-                    <div className="text-white font-medium">01. 항공권 [예매 확정 ✅]</div>
-                    <div className="text-xs text-[#E5C89B] mt-0.5">
-                      제주항공 오이타 직항 (7C1512 / 7C1511)
-                    </div>
-                    <div className="text-[11px] text-white/45">
-                      성인 {CONFIRMED_FLIGHT.adultFareKRW.toLocaleString()}원×3 + 유아{' '}
-                      {CONFIRMED_FLIGHT.infantFareKRW.toLocaleString()}원
-                    </div>
-                  </div>
-                  <div className="tabular-nums font-medium text-white whitespace-nowrap">
-                    {CONFIRMED_FLIGHT.total3Adults1InfantKRW.toLocaleString()}원
-                  </div>
-                </div>
-
-                <div className="pt-4 flex justify-between items-start gap-3">
-                  <div>
-                    <div className="text-white font-medium">
-                      02. 유후인 1박 + 벳푸 2박 확정 숙박 합산
-                    </div>
-                    <div className="text-xs text-white/80 mt-1 space-y-1">
-                      <div>
-                        • <strong>[유후인 1박]</strong> {selectedYufuinRyokan.name.split(' (')[0]} (2식 올인클루시브):{' '}
-                        <span className="text-[#E5C89B]">{yufuin1NightKRW.toLocaleString()}원</span>{' '}
-                        <span className="text-white/50 text-[11px]">(¥{yufuin1NightJPY.toLocaleString()})</span>
-                      </div>
-                      <div>
-                        • <strong>[벳푸 2박]</strong> {selectedBeppuRyokan.name.split(' (')[0]} (조식 포함):{' '}
-                        <span className="text-[#E5C89B]">
-                          {beppu2NightsKRW.toLocaleString()}원
-                        </span>{' '}
-                        <span className="text-white/50 text-[11px]">
-                          ({beppu1NightKRW.toLocaleString()} / ¥{beppu1NightJPY.toLocaleString()}×2박)
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="tabular-nums font-medium text-white whitespace-nowrap">
-                    {totalStay3NightsKRW.toLocaleString()}원
-                  </div>
-                </div>
-
-                <div className="pt-4 flex justify-between items-start gap-3">
-                  <div>
-                    <div className="text-white font-medium">03. 확정 이동수단 (4일 실비 합산)</div>
-                    <div className="text-xs text-white/65 mt-0.5">
-                      공항리무진 왕복 + JR 특급열차(유후인→벳푸) + 벳푸 시내 택시
-                    </div>
-                  </div>
-                  <div className="tabular-nums font-medium text-white whitespace-nowrap">
-                    {CONFIRMED_TRANSIT_COST.totalKRW.toLocaleString()}원
-                  </div>
-                </div>
-
-                <div className="pt-4 space-y-2">
-                  <div className="flex justify-between items-baseline">
-                    <span className="text-white font-medium">04. 식비·입장권·쇼핑 예비비</span>
-                    <span className="tabular-nums font-medium text-white">
-                      {extraFoodAndTicketKRW.toLocaleString()}원
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min={300000}
-                    max={1500000}
-                    step={50000}
-                    value={extraFoodAndTicketKRW}
-                    onChange={(e) => setExtraFoodAndTicketKRW(parseInt(e.target.value, 10))}
-                    className="w-full accent-[#E5C89B] cursor-pointer"
-                  />
-                </div>
-              </div>
-
-              <div className="border-t border-white/25 pt-5 space-y-2">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-[11px] sm:text-xs uppercase tracking-wider text-white/70">
-                    Total Estimate (KRW)
-                  </span>
-                  <span className="font-serif-kr text-xl sm:text-3xl text-[#E5C89B] tabular-nums">
-                    {totalBudgetKRW.toLocaleString()}원
-                  </span>
-                </div>
-                <div className="flex items-baseline justify-between text-xs text-white/65">
-                  <span>성인 1인당 부담액 (÷3인)</span>
-                  <span className="tabular-nums font-medium text-white">
-                    약 {perAdultKRW.toLocaleString()}원
-                  </span>
-                </div>
-
-                <div className="pt-4 border-t border-white/15 space-y-2">
-                  <button
-                    type="button"
-                    onClick={handleSaveCurrentPlan}
-                    disabled={isAuthLoading}
-                    className="w-full py-3 bg-[#E5C89B] text-[#191816] font-semibold text-xs sm:text-sm hover:bg-[#d9b882] transition shadow cursor-pointer flex items-center justify-center gap-2"
+              <div className="grid md:grid-cols-2 gap-5">
+                {MEAL_AND_BABY_SCHEDULE.map((m) => (
+                  <div
+                    key={m.day}
+                    className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 space-y-4"
                   >
-                    <span>💾</span>
-                    <span>현재 숙소 조합 및 견적 Neon DB에 저장</span>
-                  </button>
-                  <div className="flex items-center justify-between text-[11px] text-white/50">
-                    <span className="flex items-center gap-1.5">
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full ${
-                          dbStatus.connected ? 'bg-emerald-400' : 'bg-amber-400'
-                        }`}
-                      />
-                      <span>{dbStatus.connected ? 'Neon DB 정상 연동' : 'DB 연결 상태 확인'}</span>
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
+                      <span className="text-base sm:text-lg font-extrabold text-slate-900">
+                        {m.dateLabel}
+                      </span>
+                      <span className="px-3 py-1 rounded-lg bg-blue-50 border border-blue-200 text-xs font-bold text-blue-700">
+                        {m.stayInfo}
+                      </span>
+                    </div>
+
+                    <div className="space-y-3 text-sm leading-relaxed">
+                      {/* Breakfast */}
+                      <div className="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="px-2 py-0.5 rounded-md bg-slate-900 text-white font-mono text-xs font-bold">
+                            조식 08:00
+                          </span>
+                          {m.breakfast.included && (
+                            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                              숙소 포함 ✅
+                            </span>
+                          )}
+                        </div>
+                        <div className="font-bold text-slate-900 pt-1">{m.breakfast.place}</div>
+                        <p className="text-xs sm:text-sm text-slate-600">{m.breakfast.note}</p>
+                      </div>
+
+                      {/* Lunch */}
+                      <div className="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="px-2 py-0.5 rounded-md bg-amber-600 text-white font-mono text-xs font-bold">
+                            중식 13:00
+                          </span>
+                          <span className="text-xs font-semibold text-amber-800">
+                            {m.lunch.time}
+                          </span>
+                        </div>
+                        <div className="font-bold text-slate-900 pt-1">
+                          1순위: {m.lunch.primary}
+                        </div>
+                        <div className="text-xs font-semibold text-blue-700">
+                          대안: {m.lunch.backup}
+                        </div>
+                        <p className="text-xs sm:text-sm text-slate-600 pt-0.5">{m.lunch.babyNote}</p>
+                      </div>
+
+                      {/* Dinner */}
+                      <div className="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="px-2 py-0.5 rounded-md bg-blue-600 text-white font-mono text-xs font-bold">
+                            석식 18:00
+                          </span>
+                          {m.dinner.included ? (
+                            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                              숙소 포함 ✅
+                            </span>
+                          ) : (
+                            <span className="text-xs font-semibold text-blue-700">
+                              벳푸역 인근 외식
+                            </span>
+                          )}
+                        </div>
+                        <div className="font-bold text-slate-900 pt-1">
+                          1순위: {m.dinner.primary}
+                        </div>
+                        {!m.dinner.included && (
+                          <div className="text-xs font-semibold text-blue-700">
+                            대안: {m.dinner.backup}
+                          </div>
+                        )}
+                        <p className="text-xs sm:text-sm text-slate-600 pt-0.5">{m.dinner.babyNote}</p>
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-950">
+                      <strong>😴 20:00 아기 취침 후:</strong> {m.bedtimeAndAdultTime}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ---------------------------------------------------------------
+            TAB 3: FLIGHT & TRANSIT TIMETABLE GUIDE
+           --------------------------------------------------------------- */}
+        {mainTab === 'transit' && (
+          <section className="space-y-6">
+            {/* Confirmed Flight Card */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 sm:p-7 space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-4">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <span className="px-3 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold">
+                    항공권 확정 완료 ✅
+                  </span>
+                  <h2 className="text-lg sm:text-2xl font-extrabold text-slate-900">
+                    제주항공 (Jeju Air) · 인천(T1) ↔ 오이타(OIT) 직항
+                  </h2>
+                </div>
+                <span className="text-xs sm:text-sm font-bold text-blue-700">
+                  성인 3인 + 13개월 유아 1인 (유모차 도어투도어 무료 위탁)
+                </span>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-blue-700">
+                    <span>🛫 출국편 · 2026. 12. 21 (월)</span>
+                    <span className="font-mono bg-white px-2.5 py-0.5 rounded-md border border-slate-200">
+                      편명: {CONFIRMED_FLIGHT.outboundFlight}
                     </span>
-                    {lastSavedAt ? (
-                      <span className="text-[#E5C89B]">최근 저장: {lastSavedAt}</span>
-                    ) : (
-                      <span className="text-white/40">미저장 상태</span>
-                    )}
+                  </div>
+                  <div className="text-lg sm:text-xl font-extrabold text-slate-900 font-mono">
+                    10:50 인천(T1) 출발 ➔ 12:45 오이타 도착
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    • 08:00 아기 아침 식사 후 08:30 인천공항 T1 도착 · 교통약자 우대 출국통로 이용
+                    <br />• 12:45 착륙 후 입국 15분 컷 ➔ 공항에서 아기 13:00 점심 후 <strong>13:25 유후인행 리무진 탑승</strong>
+                  </p>
+                </div>
+
+                <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-blue-700">
+                    <span>🛬 귀국편 · 2026. 12. 24 (목)</span>
+                    <span className="font-mono bg-white px-2.5 py-0.5 rounded-md border border-slate-200">
+                      편명: {CONFIRMED_FLIGHT.inboundFlight}
+                    </span>
+                  </div>
+                  <div className="text-lg sm:text-xl font-extrabold text-slate-900 font-mono">
+                    13:55 오이타 출발 ➔ 15:50 인천(T1) 도착
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    • 10:05경 벳푸역 앞([B]노선, 도보 1분) 또는 10:20 키타하마(전 노선) 에어라이너 탑승 ➔ 11:03~11:10 공항 도착
+                    <br />• 공항 국내선 3층 「나나세」 중식(12:10) & 2층 수유실(아기 13:00 점심) · 1층 무료 족욕탕 후 출국
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-3 text-xs sm:text-sm">
+                <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 text-emerald-950">
+                  <strong className="block mb-1 text-emerald-800">🧳 수하물 & 유모차 규정</strong>
+                  {CONFIRMED_FLIGHT.baggageRule}
+                </div>
+                <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200 text-amber-950">
+                  <strong className="block mb-1 text-amber-900">👶 공항 & 기내 아기 케어 핵심</strong>
+                  유아 별도 위탁수하물(10kg)은 없으므로 아기 기저귀·여벌옷은 성인 캐리어 3개(총 45kg)에 나누어 담으세요.
+                </div>
+              </div>
+            </div>
+
+            {/* 4-Stage Transit Master Guide */}
+            <DynamicRouteMap />
+          </section>
+        )}
+
+        {/* ---------------------------------------------------------------
+            TAB 4: CONFIRMED STAYS, BUDGET FOLIO & CHECKLIST
+           --------------------------------------------------------------- */}
+        {mainTab === 'stays-folio' && (
+          <section className="space-y-8">
+            {/* Confirmed 2 Stays Cards */}
+            <div className="space-y-4">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                  Confirmed Stays Master Guide
+                </span>
+                <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">
+                  🏨 확정 숙소 2곳 상세 가이드 — 유후인 산스이칸(1박) & 온야도 노노 벳푸(2박)
+                </h2>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                {YUFUIN_RYOKANS.map((r) =>
+                  renderRyokanCard(
+                    r,
+                    r.id === selectedYufuinRyokanId,
+                    () => setSelectedYufuinRyokanId(r.id),
+                    'Day 1 · 유후인 1박 확정',
+                    1
+                  )
+                )}
+                {BEPPU_RYOKANS.map((r) =>
+                  renderRyokanCard(
+                    r,
+                    r.id === selectedBeppuRyokanId,
+                    () => setSelectedBeppuRyokanId(r.id),
+                    'Day 2–3 · 벳푸 2박 연박 확정',
+                    2
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* 3 Playbook Tips */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-7 shadow-xs space-y-4">
+              <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 border-b border-slate-200 pb-3">
+                💡 유후인 산스이칸 · 온야도 노노 벳푸 200% 활용 실전 팁
+              </h3>
+              <div className="grid md:grid-cols-3 gap-5">
+                {OTA_BOOKING_GUIDE.map((tip) => (
+                  <div key={tip.step} className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                    <span className="px-2.5 py-0.5 rounded-md bg-blue-600 text-white text-xs font-bold">
+                      Tip {tip.step}
+                    </span>
+                    <h4 className="text-sm sm:text-base font-bold text-slate-900 leading-snug pt-1">
+                      {tip.title}
+                    </h4>
+                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                      {tip.desc}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Checklist + Budget Folio */}
+            <div className="grid lg:grid-cols-12 gap-8 items-start">
+              {/* Left 7 Cols: Checklist & Transit Breakdown */}
+              <div className="lg:col-span-7 space-y-6">
+                {/* Checklist */}
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                    <div>
+                      <h3 className="text-lg sm:text-xl font-extrabold text-slate-900">
+                        ✅ 출국 전 필수 체크리스트
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-500">
+                        항목을 클릭해 준비 상태를 체크하세요.
+                      </p>
+                    </div>
+                    <span className="px-3 py-1 rounded-xl bg-blue-50 text-blue-700 font-bold text-xs sm:text-sm">
+                      완료 {completedChecklistCount} / {BABY_CHECKLIST.length}
+                    </span>
+                  </div>
+
+                  <div className="divide-y divide-slate-200">
+                    {BABY_CHECKLIST.map((item) => {
+                      const checked = !!checkedItems[item.id]
+                      return (
+                        <div
+                          key={item.id}
+                          onClick={() => toggleCheck(item.id)}
+                          className="py-4 flex items-start gap-3.5 cursor-pointer group"
+                        >
+                          <span
+                            className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 border transition ${
+                              checked
+                                ? 'bg-blue-600 text-white border-blue-600'
+                                : 'bg-white text-transparent border-slate-300 group-hover:border-blue-500'
+                            }`}
+                          >
+                            ✓
+                          </span>
+                          <div className="space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-xs font-semibold text-slate-500">
+                                {item.category}
+                              </span>
+                              {item.critical && (
+                                <span className="px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold">
+                                  필수 확인
+                                </span>
+                              )}
+                            </div>
+                            <h4
+                              className={`text-sm sm:text-base font-bold ${
+                                checked ? 'line-through text-slate-400' : 'text-slate-900'
+                              }`}
+                            >
+                              {item.title}
+                            </h4>
+                            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                              {item.detail}
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Transit Cost Table */}
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4">
+                  <div className="flex items-baseline justify-between border-b border-slate-200 pb-3">
+                    <h3 className="text-base sm:text-lg font-extrabold text-slate-900">
+                      🚌 리무진 · JR 특급열차 · 벳푸 택시 실비 내역
+                    </h3>
+                    <span className="text-sm sm:text-base font-extrabold text-blue-700 tabular-nums">
+                      총 ¥{CONFIRMED_TRANSIT_COST.totalJPY.toLocaleString()} (약{' '}
+                      {CONFIRMED_TRANSIT_COST.totalKRW.toLocaleString()}원)
+                    </span>
+                  </div>
+
+                  <div className="divide-y divide-slate-200 text-xs sm:text-sm">
+                    {CONFIRMED_TRANSIT_COST.items.map((tItem, idx) => (
+                      <div key={idx} className="py-3 flex items-start justify-between gap-3">
+                        <div>
+                          <div className="font-bold text-slate-900">{tItem.label}</div>
+                          <div className="text-xs text-slate-500 mt-0.5">{tItem.note}</div>
+                        </div>
+                        <div className="text-right tabular-nums shrink-0">
+                          <div className="font-bold text-slate-900">{tItem.krw.toLocaleString()}원</div>
+                          <div className="text-xs text-slate-500">¥{tItem.jpy.toLocaleString()}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right 5 Cols: Budget Folio */}
+              <div className="lg:col-span-5 lg:sticky lg:top-20 bg-slate-900 text-white rounded-2xl p-6 sm:p-7 space-y-6 shadow-md">
+                <div className="border-b border-slate-700 pb-4 flex items-baseline justify-between">
+                  <div>
+                    <div className="text-xs uppercase tracking-wider text-blue-400 font-bold">
+                      Confirmed Travel Folio
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-extrabold text-white mt-0.5">
+                      확정 여정 총 견적 명세서
+                    </h3>
+                  </div>
+                  <span className="text-xs text-slate-300 font-medium">성인 3 · 유아 1</span>
+                </div>
+
+                <div className="space-y-4 text-sm divide-y divide-slate-800">
+                  <div className="pt-1 flex justify-between items-start gap-3">
+                    <div>
+                      <div className="text-white font-bold">01. 항공권 [예매 확정 ✅]</div>
+                      <div className="text-xs text-blue-300 mt-0.5">
+                        제주항공 오이타 직항 (7C1512 / 7C1511)
+                      </div>
+                      <div className="text-xs text-slate-400 mt-0.5">
+                        성인 {CONFIRMED_FLIGHT.adultFareKRW.toLocaleString()}원×3 + 유아{' '}
+                        {CONFIRMED_FLIGHT.infantFareKRW.toLocaleString()}원
+                      </div>
+                    </div>
+                    <div className="tabular-nums font-bold text-white whitespace-nowrap">
+                      {CONFIRMED_FLIGHT.total3Adults1InfantKRW.toLocaleString()}원
+                    </div>
+                  </div>
+
+                  <div className="pt-4 flex justify-between items-start gap-3">
+                    <div>
+                      <div className="text-white font-bold">
+                        02. 유후인 1박 + 벳푸 2박 확정 숙박
+                      </div>
+                      <div className="text-xs text-slate-300 mt-1.5 space-y-1">
+                        <div>
+                          • <strong>유후인 산스이칸 (1박 · 석식+조식):</strong>{' '}
+                          <span className="text-amber-300 font-semibold">
+                            {yufuin1NightKRW.toLocaleString()}원
+                          </span>{' '}
+                          <span className="text-slate-400">(¥{yufuin1NightJPY.toLocaleString()})</span>
+                        </div>
+                        <div>
+                          • <strong>온야도 노노 벳푸 (2박 · 조식만):</strong>{' '}
+                          <span className="text-amber-300 font-semibold">
+                            {beppu2NightsKRW.toLocaleString()}원
+                          </span>{' '}
+                          <span className="text-slate-400">
+                            (¥{beppu1NightJPY.toLocaleString()}×2박)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="tabular-nums font-bold text-white whitespace-nowrap">
+                      {totalStay3NightsKRW.toLocaleString()}원
+                    </div>
+                  </div>
+
+                  <div className="pt-4 flex justify-between items-start gap-3">
+                    <div>
+                      <div className="text-white font-bold">03. 확정 이동수단 (4일 실비)</div>
+                      <div className="text-xs text-slate-400 mt-0.5">
+                        공항리무진 왕복 + JR 특급 유후 2호 + 벳푸 택시
+                      </div>
+                    </div>
+                    <div className="tabular-nums font-bold text-white whitespace-nowrap">
+                      {CONFIRMED_TRANSIT_COST.totalKRW.toLocaleString()}원
+                    </div>
+                  </div>
+
+                  <div className="pt-4 space-y-2">
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-white font-bold">04. 중·석식 외식·입장권·쇼핑 예비비</span>
+                      <span className="tabular-nums font-bold text-amber-300">
+                        {extraFoodAndTicketKRW.toLocaleString()}원
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={300000}
+                      max={1500000}
+                      step={50000}
+                      value={extraFoodAndTicketKRW}
+                      onChange={(e) => setExtraFoodAndTicketKRW(parseInt(e.target.value, 10))}
+                      className="w-full accent-blue-500 cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-700 pt-5 space-y-2">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-xs uppercase tracking-wider text-slate-400 font-bold">
+                      총 예상 견적 (KRW)
+                    </span>
+                    <span className="text-2xl sm:text-3xl font-extrabold text-amber-300 tabular-nums">
+                      {totalBudgetKRW.toLocaleString()}원
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between text-xs sm:text-sm text-slate-300">
+                    <span>성인 1인당 부담액 (÷3인)</span>
+                    <span className="tabular-nums font-bold text-white">
+                      약 {perAdultKRW.toLocaleString()}원
+                    </span>
+                  </div>
+
+                  <div className="pt-4 space-y-2">
+                    <button
+                      type="button"
+                      onClick={handleSaveCurrentPlan}
+                      disabled={isAuthLoading}
+                      className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition shadow cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <span>💾</span>
+                      <span>현재 견적 설정 Neon DB에 저장</span>
+                    </button>
+                    <div className="flex items-center justify-between text-xs text-slate-400">
+                      <span className="flex items-center gap-1.5">
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            dbStatus.connected ? 'bg-emerald-400' : 'bg-amber-400'
+                          }`}
+                        />
+                        <span>{dbStatus.connected ? 'Neon DB 정상 연동' : 'DB 상태 확인'}</span>
+                      </span>
+                      {lastSavedAt ? (
+                        <span className="text-blue-300">최근 저장: {lastSavedAt}</span>
+                      ) : (
+                        <span>미저장 상태</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
       </main>
 
       {/* Mobile Floating Bottom Bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#191816]/95 backdrop-blur-md text-[#F6F3EC] border-t border-white/15 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-2xl flex items-center justify-between gap-2.5">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md text-slate-900 border-t border-slate-200 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-lg flex items-center justify-between gap-2.5">
         <div className="min-w-0 flex-1">
-          <div className="text-[11px] text-[#E5C89B] truncate font-medium">
-            {selectedYufuinRyokan.name.split(' (')[0]}(1박) + {selectedBeppuRyokan.name.split(' (')[0]}(2박)
+          <div className="text-xs text-blue-600 truncate font-bold">
+            산스이칸(1박) + 온야도 노노(2박)
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="font-serif-kr text-base font-semibold text-white tabular-nums">
+            <span className="text-base font-extrabold text-slate-900 tabular-nums">
               {totalBudgetKRW.toLocaleString()}원
             </span>
-            <span className="text-[10px] text-white/60">
+            <span className="text-xs text-slate-500">
               (1인 {Math.round(perAdultKRW / 10000)}만)
             </span>
           </div>
@@ -1295,16 +1262,19 @@ function TravelJournal() {
         <div className="flex items-center gap-1.5 shrink-0">
           <button
             onClick={handleSaveCurrentPlan}
-            className="px-3 py-2 bg-white/15 hover:bg-white/25 text-white border border-white/25 font-medium text-xs whitespace-nowrap transition cursor-pointer"
+            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 font-bold text-xs whitespace-nowrap transition cursor-pointer"
           >
             💾 저장
           </button>
-          <a
-            href="#chapter-folio"
-            className="px-3 py-2 bg-[#E5C89B] text-[#191816] font-semibold text-xs whitespace-nowrap hover:bg-[#d9b882] transition shadow cursor-pointer"
+          <button
+            onClick={() => {
+              setMainTab('stays-folio')
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
+            className="px-3.5 py-2 rounded-xl bg-blue-600 text-white font-bold text-xs whitespace-nowrap hover:bg-blue-700 transition shadow-xs cursor-pointer"
           >
-            명세서 ↓
-          </a>
+            명세서 보기
+          </button>
         </div>
       </div>
     </div>
